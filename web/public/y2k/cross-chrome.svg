@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140"><defs><linearGradient id="chrome" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0" stop-color="#FFFFFF"/><stop offset=".28" stop-color="#C4CAD2"/>
+  <stop offset=".45" stop-color="#5E646D"/><stop offset=".55" stop-color="#F2F4F7"/>
+  <stop offset=".78" stop-color="#8A919B"/><stop offset="1" stop-color="#E6E9ED"/>
+</linearGradient><filter id="sh" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="1.5" dy="2.5" stdDeviation="2" flood-color="#1B1F26" flood-opacity=".35"/></filter></defs><polygon points="50,0 56,12 56,34 78,34 90,40 78,46 56,46 56,128 50,140 44,128 44,46 22,46 10,40 22,34 44,34 44,12" fill="url(#chrome)" stroke="#4A5058" stroke-width=".8" stroke-linejoin="round" filter="url(#sh)"/><line x1="50" y1="8" x2="50" y2="130" stroke="#fff" stroke-width="2" opacity=".6"/></svg>

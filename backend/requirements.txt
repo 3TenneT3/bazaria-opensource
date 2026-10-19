@@ -1,0 +1,17 @@
+fastapi==0.143.2
+uvicorn[standard]==0.54.0
+sqlalchemy==2.0.43
+asyncpg==0.30.0
+alembic==1.14.0
+pydantic==2.14.1
+pydantic-settings==2.7.1
+# PyJWT (antes python-jose, sin mantenimiento). 2.15.1 corrige todos los avisos publicados
+# hasta oct 2026; no se usa PyJWKClient (ver app/core/google_oauth.py).
+PyJWT[crypto]==2.15.1
+httpx==0.28.1
+python-multipart==0.0.32
+Pillow==12.3.0
+itsdangerous==2.2.0
+psycopg2-binary==2.9.10
+sqladmin==0.32.0
+fastapi-flare==0.5.1

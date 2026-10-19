@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140"><defs><linearGradient id="chrome" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0" stop-color="#FFFFFF"/><stop offset=".28" stop-color="#C4CAD2"/>
+  <stop offset=".45" stop-color="#5E646D"/><stop offset=".55" stop-color="#F2F4F7"/>
+  <stop offset=".78" stop-color="#8A919B"/><stop offset="1" stop-color="#E6E9ED"/>
+</linearGradient><filter id="sh" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="1.5" dy="2.5" stdDeviation="2" flood-color="#1B1F26" flood-opacity=".35"/></filter></defs><path d="M50 2 C55.76 61.84 55.76 61.84 98 70 C55.76 78.16 55.76 78.16 50 138 C44.24 78.16 44.24 78.16 2 70 C44.24 61.84 44.24 61.84 50 2Z" fill="url(#chrome)" stroke="#4A5058" stroke-width=".8" filter="url(#sh)"/><path d="M50 30 C52.0 62.0 52.0 62.0 60 70 C52.0 78.0 52.0 78.0 50 110 C48.0 78.0 48.0 78.0 40 70 C48.0 62.0 48.0 62.0 50 30Z" fill="#fff" opacity=".7"/></svg>

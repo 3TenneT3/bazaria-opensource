@@ -1,0 +1,447 @@
+@import 'tailwindcss';
+@import '@fontsource/quicksand/400.css';
+@import '@fontsource/quicksand/500.css';
+@import '@fontsource/quicksand/600.css';
+@import '@fontsource/quicksand/700.css';
+
+/* El modo oscuro se controla con la clase .dark en <html> (botón día/noche),
+   no solo con prefers-color-scheme del sistema. TemaProvider aplica la clase. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Paleta pastel "Aesthetic Bazar" */
+  --color-crema: #fdfbf6;
+  --color-crema-dark: #1c1a22;
+  --color-tinta: #322f3d;
+  --color-tinta-dark: #f3f0fa;
+
+  /* Superficie sólida para tarjetas/UI en modo oscuro: opaca a propósito
+     para que el fondo (incluida la textura de libreta) nunca se filtre
+     a través de tarjetas, inputs o barras. */
+  --color-superficie-dark: #2a2733;
+
+  --color-lila-50: #f3effa;
+  --color-lila-100: #e6def4;
+  --color-lila-300: #c3aee8;
+  --color-lila-500: #9b7fd1;
+  --color-lila-600: #8468bd;
+  --color-lila-700: #6b52a0;
+
+  --color-menta-100: #dcf3ea;
+  --color-menta-300: #a9e0cb;
+  --color-menta-500: #1f7a55; /* verde de ganancia: >=4.5:1 sobre blanco; en oscuro se aclara abajo */
+
+  --color-rosa-100: #fbe4ec;
+  --color-rosa-300: #f3b8cf;
+  --color-rosa-500: #e687ac;
+
+  --font-display: 'Quicksand', 'Nunito', system-ui, sans-serif;
+  --font-sans: 'Quicksand', 'Nunito', system-ui, sans-serif;
+
+  --radius-bazar: 1.5rem;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-crema);
+    color: var(--color-tinta);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100svh;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  html.dark body {
+    background-color: var(--color-crema-dark);
+    color: var(--color-tinta-dark);
+  }
+
+  /* Textura sutil tipo cuadrícula de libreta */
+  .bg-libreta {
+    background-image:
+      linear-gradient(to right, rgb(0 0 0 / 0.025) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(0 0 0 / 0.025) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  html.dark .bg-libreta {
+    background-image:
+      linear-gradient(to right, rgb(255 255 255 / 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(255 255 255 / 0.03) 1px, transparent 1px);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-lila-500);
+    outline-offset: 2px;
+  }
+}
+
+/* Skins: reemplazan el acento (lila-*) y los fondos. Se eligen en la ruedita de configuración. */
+[data-skin='menta'] {
+  --color-lila-50: #eaf7f1; --color-lila-100: #d3efe3; --color-lila-300: #8fd4b8;
+  --color-lila-500: #3a9c76; --color-lila-600: #2d8664; --color-lila-700: #226a4f;
+  --color-crema: #f8fcf9; --color-crema-dark: #162019; --color-superficie-dark: #1f2e25;
+}
+[data-skin='rosa'] {
+  --color-lila-50: #fdf0f5; --color-lila-100: #fbdce8; --color-lila-300: #f2a9c6;
+  --color-lila-500: #d9558f; --color-lila-600: #c04079; --color-lila-700: #9c3463;
+  --color-crema: #fffafb; --color-crema-dark: #22171c; --color-superficie-dark: #31222a;
+}
+[data-skin='oceano'] {
+  --color-lila-50: #edf4fc; --color-lila-100: #d5e5f8; --color-lila-300: #94bdea;
+  --color-lila-500: #3f7fc9; --color-lila-600: #336ba9; --color-lila-700: #285488;
+  --color-crema: #f7fafd; --color-crema-dark: #141a24; --color-superficie-dark: #1f2735;
+}
+[data-skin='atardecer'] {
+  --color-lila-50: #fff3eb; --color-lila-100: #ffe0cc; --color-lila-300: #ffb88a;
+  --color-lila-500: #d9672a; --color-lila-600: #bd5420; --color-lila-700: #97421a;
+  --color-crema: #fffaf5; --color-crema-dark: #211a15; --color-superficie-dark: #302620;
+}
+
+/* Doodle: referencia "Aesthetic Bazar" — papel cuadriculado azul, trazo índigo, verde de apoyo. */
+[data-skin='doodle'] {
+  --color-lila-50: #eef0ff; --color-lila-100: #dde1ff; --color-lila-300: #9aa4ee;
+  --color-lila-500: #4a47c4; --color-lila-600: #3b38a8; --color-lila-700: #2e2c85;
+  --color-menta-500: #23704a; --color-menta-100: #dcf3e4;
+  --color-crema: #f7faff; --color-crema-dark: #14152b; --color-superficie-dark: #1f2142;
+  --color-tinta: #23235a;
+}
+[data-skin='doodle'] .bg-libreta {
+  background-image:
+    linear-gradient(to right, rgb(74 71 196 / 0.10) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(74 71 196 / 0.10) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+[data-skin='doodle'] .tarjeta { border: 2px solid var(--color-lila-500); }
+
+/* Doodle: stickers generados (public/doodle) en los márgenes de pantallas grandes y mascota en Inicio. */
+/* Mascota de la estética en Inicio (la elige DECORACION). main sobre los stickers del fondo. */
+.mascota-inicio {
+  position: absolute; right: 0; top: -0.6rem;
+  width: 4.25rem; height: 4.25rem; object-fit: contain; pointer-events: none;
+}
+[data-skin='doodle'] main, [data-skin='y2k'] main, [data-skin='gyaru'] main, [data-skin='fairy'] main, [data-skin='goth'] main, [data-skin='tokyo'] main { position: relative; z-index: 1; }
+@media (min-width: 1024px) {
+  [data-skin='doodle'] .bg-libreta::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none;
+    background:
+      url('/doodle/carita1.webp') no-repeat left calc(14rem + 1.5%) top 10% / 72px,
+      url('/doodle/flor.webp') no-repeat right 1.5% top 10% / 76px,
+      url('/doodle/nota.webp') no-repeat right 1.5% top 44% / 80px,
+      url('/doodle/carita3.webp') no-repeat left calc(14rem + 1.5%) bottom 18% / 70px,
+      url('/doodle/pinceles.webp') no-repeat right 1% bottom 8% / 88px,
+      url('/doodle/carita2.webp') no-repeat left calc(14rem + 2%) top 48% / 64px;
+  }
+}
+
+/* Verde de ganancia en modo oscuro (todas las skins; fairy tiene el suyo más abajo). */
+html.dark { --color-menta-500: #7fd6b1; }
+
+/* Texto secundario legible en todas las skins: los grises translúcidos (/40-/70, incluida la navegación
+   inactiva) quedan en 80 % de tinta, >=4.5:1 sobre las superficies y fondos de todas las skins. */
+html:not(.dark) [class*='text-tinta/4'], html:not(.dark) [class*='text-tinta/5'],
+html:not(.dark) [class*='text-tinta/6'], html:not(.dark) [class*='text-tinta/7'] {
+  color: color-mix(in srgb, var(--color-tinta) 80%, transparent);
+}
+html.dark [class*='text-tinta-dark/4'], html.dark [class*='text-tinta-dark/5'],
+html.dark [class*='text-tinta-dark/6'], html.dark [class*='text-tinta-dark/7'] {
+  color: color-mix(in srgb, var(--color-tinta-dark) 80%, transparent);
+}
+input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--color-tinta) 65%, transparent); }
+html.dark input::placeholder, html.dark textarea::placeholder { color: color-mix(in srgb, var(--color-tinta-dark) 60%, transparent); }
+[data-skin='doodle'] body { font-weight: 500; }
+[data-skin='doodle'] .text-xs { font-size: 0.8125rem; line-height: 1.25rem; }
+[data-skin='doodle'] .text-\[10px\] { font-size: 0.75rem; }
+
+/* Y2K: cyber-grunge azul + cromo plateado (public/y2k). Claro = cielo de cromo con scanlines;
+   oscuro = tinta casi negra con halftone azul apagado. Acento: mezclilla. */
+[data-skin='y2k'] {
+  --color-lila-50: #edf2f9; --color-lila-100: #dce6f3; --color-lila-300: #8fa9cf;
+  --color-lila-500: #3d5a86; --color-lila-600: #2f4870; --color-lila-700: #22355a;
+  --color-crema: #e9ecf0; --color-crema-dark: #0b0e14; --color-superficie-dark: #161b26;
+  --color-tinta: #0b0e14; --color-tinta-dark: #e8f1fb;
+  --y2k-espiral: url('/y2k/star-spiral-claro.svg');
+  --y2k-angel-wings: url('/y2k/angel-wings.webp');
+  --y2k-holo-star: url('/y2k/holo-star.webp');
+  --y2k-liquid-heart: url('/y2k/liquid-heart.webp');
+  --y2k-smiley-barbed: url('/y2k/smiley-barbed.webp');
+  --y2k-glitter-butterfly: url('/y2k/glitter-butterfly.webp');
+  --y2k-badge-vendido: url('/y2k/badge-vendido.webp');
+  --y2k-tribal-chrome: url('/y2k/tribal-chrome.webp');
+  --y2k-planeta: url('/y2k/planet-sticker.svg');
+  --y2k-bazar2000: url('/y2k/badge-bazar2000.webp');
+}
+/* En oscuro los stickers van sin el borde blanco de calcomanía (BAZAR 2000 lo conserva, en crema). */
+html.dark[data-skin='y2k'] {
+  --y2k-espiral: url('/y2k/star-spiral.svg');
+  --y2k-angel-wings: url('/y2k/angel-wings-oscuro.webp');
+  --y2k-holo-star: url('/y2k/holo-star-oscuro.webp');
+  --y2k-liquid-heart: url('/y2k/liquid-heart-oscuro.webp');
+  --y2k-smiley-barbed: url('/y2k/smiley-barbed.webp');
+  --y2k-glitter-butterfly: url('/y2k/glitter-butterfly-oscuro.webp');
+  --y2k-badge-vendido: url('/y2k/badge-vendido-oscuro.webp');
+  --y2k-tribal-chrome: url('/y2k/tribal-chrome-oscuro.webp');
+  --y2k-planeta: url('/y2k/planet-sticker-oscuro.svg');
+  --y2k-bazar2000: url('/y2k/badge-bazar2000-oscuro.webp');
+}
+[data-skin='y2k'] .bg-libreta {
+  background:
+    radial-gradient(60% 40% at 15% 10%, rgb(255 255 255 / 0.9), transparent 70%),
+    radial-gradient(50% 35% at 85% 60%, rgb(255 255 255 / 0.7), transparent 70%),
+    linear-gradient(rgb(233 236 240 / 0.88), rgb(233 236 240 / 0.88)),
+    url('/y2k/scanlines-tile.svg') var(--color-crema);
+}
+html.dark[data-skin='y2k'] .bg-libreta {
+  background:
+    radial-gradient(50% 30% at 80% 0%, rgb(156 200 240 / 0.12), transparent 70%),
+    linear-gradient(rgb(11 14 20 / 0.82), rgb(11 14 20 / 0.82)),
+    url('/y2k/libreta-tile.webp') 0 0 / 420px;
+}
+[data-skin='y2k'] .tarjeta { border: 1px solid #c4cad2; }
+html.dark[data-skin='y2k'] .tarjeta { border-color: rgb(156 200 240 / 0.18); }
+[data-skin='y2k'] ::selection { background: #9cc8f0; color: #0b0e14; }
+
+@media (min-width: 1024px) {
+  [data-skin='y2k'] .bg-libreta::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none;
+    background:
+      var(--y2k-angel-wings) no-repeat left calc(14rem + 1%) top 7% / 96px,
+      var(--y2k-holo-star) no-repeat left calc(14rem + 2%) top 27% / 66px,
+      var(--y2k-bazar2000) no-repeat left calc(14rem + 1%) top 46% / 96px,
+      var(--y2k-liquid-heart) no-repeat left calc(14rem + 2.5%) top 66% / 60px,
+      var(--y2k-espiral) no-repeat left calc(14rem + 1.5%) bottom 4% / 76px,
+      var(--y2k-smiley-barbed) no-repeat right 1.5% top 8% / 72px,
+      var(--y2k-glitter-butterfly) no-repeat right 2.5% top 28% / 60px,
+      var(--y2k-badge-vendido) no-repeat right 0.8% top 46% / 100px,
+      var(--y2k-tribal-chrome) no-repeat right 0.8% top 64% / 100px,
+      var(--y2k-planeta) no-repeat right 1.5% bottom 4% / 70px;
+  }
+}
+
+/* Gyaru: rosa fiusha + negro, leopardo con glitter (public/gyaru). Claro = rosa chicle con manchas
+   apenas visibles; oscuro = negro con el leopardo glitter generado. Tarjetas con borde negro tipo sticker. */
+[data-skin='gyaru'] {
+  --color-lila-50: #fff0f7; --color-lila-100: #ffd9ec; --color-lila-300: #ff8dc7;
+  --color-lila-500: #d6147a; --color-lila-600: #b0105f; --color-lila-700: #8a0b4b;
+  --color-rosa-100: #ffd9ec;
+  --color-crema: #fff3f9; --color-crema-dark: #140a11; --color-superficie-dark: #24121d;
+  --color-tinta: #1a0a14; --color-tinta-dark: #ffe9f4;
+}
+[data-skin='gyaru'] .bg-libreta {
+  background: url('/gyaru/leopard-tile-rosa.svg') 0 0 / 160px var(--color-crema);
+}
+html.dark[data-skin='gyaru'] .bg-libreta {
+  background:
+    radial-gradient(60% 40% at 85% 0%, rgb(214 20 122 / 0.22), transparent 70%),
+    linear-gradient(rgb(20 10 17 / 0.86), rgb(20 10 17 / 0.86)),
+    url('/gyaru/leopard-glitter-tile.webp') 0 0 / 420px;
+}
+[data-skin='gyaru'] .tarjeta { border: 2px solid #f08cbf; }
+html.dark[data-skin='gyaru'] .tarjeta { border-color: rgb(255 141 199 / 0.35); }
+[data-skin='gyaru'] ::selection { background: #ff8dc7; color: #1a0a14; }
+@media (min-width: 1024px) {
+  [data-skin='gyaru'] .bg-libreta::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none;
+    background:
+      url('/gyaru/star-trail.svg') no-repeat left calc(14rem + 1%) top 16% / 104px,
+      url('/gyaru/flip-phone-kawaii-halo.webp') no-repeat right 1.5% top 18% / 109px,
+      url('/gyaru/heart-checker.svg') no-repeat right 2% top 52% / 83px,
+      url('/gyaru/sparkle-white.svg') no-repeat left calc(14rem + 4%) top 48% / 73px,
+      url('/gyaru/star-glitter.svg') no-repeat left calc(14rem + 1%) bottom 14% / 94px,
+      url('/gyaru/cherries.svg') no-repeat right 1.5% bottom 6% / 94px;
+  }
+}
+
+/* Fairy / fungi core: libro de cuentos vintage (public/fairy). Claro = papel envejecido con destellitos de línea;
+   oscuro = suelo de bosque de noche. Acento rojo amanita, verde oliva para ganancias. */
+[data-skin='fairy'] {
+  --color-lila-50: #f8f1e4; --color-lila-100: #efe2c8; --color-lila-300: #d99a8e;
+  --color-lila-500: #b5402f; --color-lila-600: #963425; --color-lila-700: #76291d;
+  --color-menta-500: #5e7a3a; --color-menta-100: #e4ead2; --color-rosa-100: #f3e2da;
+  --color-crema: #f6eedc; --color-crema-dark: #151a12; --color-superficie-dark: #20271b;
+  --color-tinta: #3b2a1a; --color-tinta-dark: #f2e8d2;
+}
+[data-skin='fairy'] .bg-libreta {
+  background:
+    url('/fairy/sparkles-tile.svg') 0 0 / 180px,
+    url('/fairy/papel-tile.webp') 0 0 / 520px var(--color-crema);
+}
+html.dark[data-skin='fairy'] .bg-libreta {
+  background:
+    radial-gradient(50% 35% at 20% 0%, rgb(243 210 122 / 0.10), transparent 70%),
+    linear-gradient(rgb(21 26 18 / 0.55), rgb(21 26 18 / 0.55)),
+    url('/fairy/bosque-tile.webp') 0 0 / 520px;
+}
+html.dark[data-skin='fairy'] { --color-menta-500: #a9c07a; }
+[data-skin='fairy'] .tarjeta { border: 2px solid rgb(90 59 38 / 0.35); }
+html.dark[data-skin='fairy'] .tarjeta { border-color: rgb(242 232 210 / 0.15); }
+[data-skin='fairy'] ::selection { background: #efe2c8; color: #3b2a1a; }
+@media (min-width: 1024px) {
+  [data-skin='fairy'] .bg-libreta::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none;
+    background:
+      url('/fairy/hada.webp') no-repeat left calc(14rem + 1%) top 8% / 76px,
+      url('/fairy/amanita-pair.svg') no-repeat right 1.5% top 14% / 84px,
+      url('/fairy/mariposa.webp') no-repeat right 1.5% top 48% / 72px,
+      url('/fairy/sparkle-gold.svg') no-repeat left calc(14rem + 3%) top 50% / 52px,
+      url('/fairy/caracol-casa.webp') no-repeat left calc(14rem + 1%) bottom 10% / 80px,
+      url('/fairy/fresa.webp') no-repeat right 1.5% bottom 6% / 72px;
+  }
+}
+
+/* Goth: tinta negra, hueso y un acento azul con glitter (public/goth). Claro = papel hueso con encaje tenue
+   y crucecitas; oscuro = encaje negro. Stickers de tinta con halo azul. */
+[data-skin='goth'] {
+  --color-lila-50: #eef3fc; --color-lila-100: #dce7f9; --color-lila-300: #9cbcf5;
+  --color-lila-500: #2f6fd6; --color-lila-600: #2459b3; --color-lila-700: #1b468f;
+  --color-rosa-100: #e7e3da;
+  --color-crema: #f3efe6; --color-crema-dark: #0b0b0e; --color-superficie-dark: #18181d;
+  --color-tinta: #0b0b0e; --color-tinta-dark: #ede7da;
+}
+[data-skin='goth'] .bg-libreta {
+  background:
+    url('/goth/cruces-tile.svg') 0 0 / 160px,
+    url('/goth/encaje-claro-tile.webp') 0 0 / 460px var(--color-crema);
+}
+html.dark[data-skin='goth'] .bg-libreta {
+  background:
+    radial-gradient(45% 30% at 50% 0%, rgb(47 111 214 / 0.14), transparent 70%),
+    linear-gradient(rgb(11 11 14 / 0.35), rgb(11 11 14 / 0.35)),
+    url('/goth/encaje-tile.webp') 0 0 / 460px;
+}
+[data-skin='goth'] .tarjeta { border: 2px solid #0b0b0e; }
+html.dark[data-skin='goth'] .tarjeta { border-color: rgb(237 231 218 / 0.18); }
+[data-skin='goth'] ::selection { background: #2f6fd6; color: #fff; }
+@media (min-width: 1024px) {
+  [data-skin='goth'] .bg-libreta::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none;
+    background:
+      url('/goth/velas-halo.webp') no-repeat left calc(14rem + 1%) top 7% / 84px,
+      url('/goth/luna-halo.webp') no-repeat left calc(14rem + 2%) top 32% / 64px,
+      url('/goth/rosa-halo.webp') no-repeat left calc(14rem + 1%) top 52% / 72px,
+      url('/goth/calavera-vela-halo.webp') no-repeat left calc(14rem + 1%) bottom 4% / 84px,
+      url('/goth/murcielago-halo.webp') no-repeat right 1% top 8% / 96px,
+      url('/goth/cruz-halo.webp') no-repeat right 2% top 30% / 60px,
+      url('/goth/ataud-halo.webp') no-repeat right 1.5% top 50% / 72px,
+      url('/goth/corazon-halo.webp') no-repeat right 2% top 72% / 64px,
+      url('/goth/mono-halo.webp') no-repeat right 1.5% bottom 4% / 72px;
+  }
+}
+
+/* Tokyo 2000 (Ura-Harajuku): camo de streetwear, rojo cereza, mostaza y verde (public/tokyo).
+   Claro = camo arena muy lavado; oscuro = camo rojo oscuro. Mascota tanuki con sudadera camo. */
+[data-skin='tokyo'] {
+  --color-lila-50: #fdf0ee; --color-lila-100: #f9dcd8; --color-lila-300: #ec8f88;
+  --color-lila-500: #c0262d; --color-lila-600: #a01f25; --color-lila-700: #7d181d;
+  --color-rosa-100: #f3e6c8;
+  --color-crema: #f6efdc; --color-crema-dark: #1a0d0d; --color-superficie-dark: #2a1617;
+  --color-tinta: #1c1410; --color-tinta-dark: #f6efdc;
+}
+[data-skin='tokyo'] .bg-libreta {
+  background:
+    linear-gradient(rgb(246 239 220 / 0.86), rgb(246 239 220 / 0.86)),
+    url('/tokyo/camo-tile.webp') 0 0 / 420px;
+}
+html.dark[data-skin='tokyo'] .bg-libreta {
+  background:
+    linear-gradient(rgb(26 13 13 / 0.62), rgb(26 13 13 / 0.62)),
+    url('/tokyo/camo-rojo-tile.webp') 0 0 / 420px;
+}
+[data-skin='tokyo'] .tarjeta { border: 2px solid #1c1410; }
+html.dark[data-skin='tokyo'] .tarjeta { border-color: rgb(232 184 58 / 0.4); }
+[data-skin='tokyo'] ::selection { background: #e8b83a; color: #1c1410; }
+@media (min-width: 1024px) {
+  [data-skin='tokyo'] .bg-libreta::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none;
+    background:
+      url('/tokyo/purikura.webp') no-repeat left calc(14rem + 2%) top 9% / 52px,
+      url('/tokyo/badge-tokyo.webp') no-repeat left calc(14rem + 0.6%) top 30% / 86px,
+      url('/tokyo/gashapon.webp') no-repeat left calc(14rem + 1.5%) top 50% / 66px,
+      url('/tokyo/onigiri.webp') no-repeat left calc(14rem + 1.8%) top 70% / 60px,
+      url('/tokyo/bolsa.webp') no-repeat left calc(14rem + 1.5%) bottom 3% / 70px,
+      url('/tokyo/reloj.webp') no-repeat right 1.5% top 5% / 76px,
+      url('/tokyo/sudadera.webp') no-repeat right 1.2% top 26% / 84px,
+      url('/tokyo/cassette.webp') no-repeat right 1.2% top 48% / 84px,
+      url('/tokyo/gancho.webp') no-repeat right 1.2% top 66% / 84px,
+      url('/tokyo/tenis.webp') no-repeat right 1% bottom 3% / 104px;
+  }
+}
+
+/* Uso con un dedo: sin retraso de doble toque, sin zoom al enfocar campos (iOS exige >=16px),
+   resaltado de toque con el color de la skin y sin rebote que arrastre la página. */
+@layer base {
+  html { touch-action: manipulation; -webkit-tap-highlight-color: color-mix(in srgb, var(--color-lila-500) 20%, transparent); }
+  input, select, textarea { font-size: max(16px, 1em); }
+  button, a, label, summary { touch-action: manipulation; }
+}
+
+/* Celular y tablet: stickers chicos asomándose desde las orillas, detrás del contenido (main va en z-index 1). */
+@media (max-width: 1023px) {
+  [data-skin='doodle'] .bg-libreta::before,
+  [data-skin='y2k'] .bg-libreta::before,
+  [data-skin='gyaru'] .bg-libreta::before,
+  [data-skin='fairy'] .bg-libreta::before,
+  [data-skin='goth'] .bg-libreta::before,
+  [data-skin='tokyo'] .bg-libreta::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none;
+  }
+  [data-skin='doodle'] .bg-libreta::before {
+    background:
+      url('/doodle/flor.webp') no-repeat left -14px top 24% / 48px,
+      url('/doodle/carita1.webp') no-repeat right -12px top 46% / 44px,
+      url('/doodle/nota.webp') no-repeat left -16px top 70% / 52px,
+      url('/doodle/pinceles.webp') no-repeat right -10px bottom 110px / 56px;
+  }
+  [data-skin='y2k'] .bg-libreta::before {
+    background:
+      var(--y2k-angel-wings) no-repeat left -18px top 24% / 56px,
+      var(--y2k-holo-star) no-repeat right -14px top 46% / 52px,
+      var(--y2k-espiral) no-repeat left -18px top 70% / 56px,
+      var(--y2k-smiley-barbed) no-repeat right -14px bottom 110px / 52px;
+  }
+  [data-skin='gyaru'] .bg-libreta::before {
+    background:
+      url('/gyaru/star-emo.svg') no-repeat left -12px top 24% / 57px,
+      url('/gyaru/heart-checker.svg') no-repeat right -14px top 46% / 65px,
+      url('/gyaru/star-glitter.svg') no-repeat left -16px top 70% / 68px,
+      url('/gyaru/cherries.svg') no-repeat right -12px bottom 110px / 68px;
+  }
+  [data-skin='tokyo'] .bg-libreta::before {
+    background:
+      url('/tokyo/reloj.webp') no-repeat left -14px top 24% / 52px,
+      url('/tokyo/sudadera.webp') no-repeat right -14px top 46% / 56px,
+      url('/tokyo/gashapon.webp') no-repeat left -12px top 70% / 50px,
+      url('/tokyo/tenis.webp') no-repeat right -18px bottom 110px / 70px;
+  }
+  [data-skin='goth'] .bg-libreta::before {
+    background:
+      url('/goth/murcielago-halo.webp') no-repeat left -14px top 24% / 56px,
+      url('/goth/rosa-halo.webp') no-repeat right -12px top 46% / 52px,
+      url('/goth/ataud-halo.webp') no-repeat left -14px top 70% / 50px,
+      url('/goth/velas-halo.webp') no-repeat right -12px bottom 110px / 56px;
+  }
+  [data-skin='fairy'] .bg-libreta::before {
+    background:
+      url('/fairy/mariposa.webp') no-repeat left -12px top 24% / 48px,
+      url('/fairy/amanita.svg') no-repeat right -14px top 46% / 50px,
+      url('/fairy/caracol-casa.webp') no-repeat left -18px top 70% / 56px,
+      url('/fairy/fresa.webp') no-repeat right -12px bottom 110px / 52px;
+  }
+}
+
+/* La pantalla de entrada trae sus propios stickers: sin los de los márgenes de la app. */
+[data-skin] .sin-stickers::before { content: none; }
+
+/* Landing: el cartel "¡Pruébame!" sobre la mascota se mece suave para invitar al toque. */
+@keyframes mecer { 0%, 100% { transform: rotate(-6deg) translateY(0); } 50% { transform: rotate(-3deg) translateY(-3px); } }
+.cartel-pruebame { animation: mecer 2.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .cartel-pruebame { animation: none; } }
+
+/* Landing: sin barra lateral. El ::before se recorre 14rem a la izquierda para que las posiciones
+   'left calc(14rem + x%)' de cada skin caigan en la orilla; abajo de 1280px no hay margen libre. */
+@media (min-width: 1280px) { .landing.bg-libreta::before { left: -14rem; } }
+@media (max-width: 1279px) { .landing.bg-libreta::before { content: none; } }

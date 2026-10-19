@@ -1,0 +1,22 @@
+{% extends "sqladmin/layout.html" %}
+{% block content %}
+<div class="col-12 col-md-6">
+  <div class="card">
+    <div class="card-header"><h3 class="card-title">Cambiar mi contraseña</h3></div>
+    <div class="card-body">
+      <p class="text-muted">Cuenta: <strong>{{ usuario }}</strong></p>
+      {% if mensaje %}<div class="alert alert-success">{{ mensaje }}</div>{% endif %}
+      {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+      <form method="POST" autocomplete="off">
+        <div class="mb-3"><label class="form-label">Contraseña actual</label>
+          <input type="password" name="actual" class="form-control" required autocomplete="current-password"></div>
+        <div class="mb-3"><label class="form-label">Contraseña nueva (mínimo 12 caracteres)</label>
+          <input type="password" name="nueva" class="form-control" required minlength="12" autocomplete="new-password"></div>
+        <div class="mb-3"><label class="form-label">Repite la nueva</label>
+          <input type="password" name="repetida" class="form-control" required minlength="12" autocomplete="new-password"></div>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

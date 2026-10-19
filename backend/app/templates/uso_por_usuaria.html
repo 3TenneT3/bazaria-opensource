@@ -1,0 +1,43 @@
+{% extends "sqladmin/layout.html" %}
+{% block content %}
+<div class="col-12">
+  <div class="row row-cards mb-3">
+    <div class="col-6 col-md-3"><div class="card card-sm"><div class="card-body">
+      <div class="text-muted">Usuarias activas</div><div class="h2 mb-0">{{ t.usuarias }}</div></div></div></div>
+    <div class="col-6 col-md-3"><div class="card card-sm"><div class="card-body">
+      <div class="text-muted">Fotos (promedio)</div>
+      <div class="h2 mb-0">{{ t.fotos }} <small class="text-muted">({{ "%.1f"|format(t.fotos_promedio) }})</small></div></div></div></div>
+    <div class="col-6 col-md-3"><div class="card card-sm"><div class="card-body">
+      <div class="text-muted">Espacio en fotos (promedio)</div>
+      <div class="h2 mb-0">{{ "%.1f"|format(t.mb) }} MB <small class="text-muted">({{ "%.2f"|format(t.mb_promedio) }})</small></div></div></div></div>
+    <div class="col-6 col-md-3"><div class="card card-sm"><div class="card-body">
+      <div class="text-muted">Gasto en IA este mes</div>
+      <div class="h2 mb-0">${{ "%.2f"|format(t.ia_costo_mes) }} MXN</div></div></div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3 class="card-title">Uso por usuaria</h3></div>
+    <div class="table-responsive">
+      <table class="table card-table table-vcenter">
+        <thead><tr><th>Correo</th><th>Plan</th><th>Alta</th><th class="text-end">Artículos</th>
+          <th class="text-end">Fotos</th><th class="text-end">Espacio</th>
+          <th class="text-end">IA este mes</th><th class="text-end">Costo IA mes</th></tr></thead>
+        <tbody>
+        {% for f in filas %}
+          <tr><td>{{ f.email }}</td>
+            <td>{% if f.plan == "premium" %}<span class="badge bg-purple-lt">Premium</span>{% else %}Gratis{% endif %}</td>
+            <td>{{ f.creada_en.strftime("%d/%m/%Y") }}</td>
+            <td class="text-end">{{ f.articulos }}</td><td class="text-end">{{ f.fotos }}</td>
+            <td class="text-end">{{ "%.2f"|format(f.bytes / 1048576) }} MB</td>
+            <td class="text-end">{{ f.ia_mes }}</td>
+            <td class="text-end">${{ "%.2f"|format(f.ia_costo_mes / 100) }}</td></tr>
+        {% else %}<tr><td colspan="8" class="text-muted">Sin usuarias todavía.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer text-muted">
+      Espacio = variante de 1024 px de cada foto (la miniatura suma ~10&nbsp;% más). La IA solo cuenta llamadas
+      reales a un modelo; hoy no hay ninguno conectado.
+    </div>
+  </div>
+</div>
+{% endblock %}
