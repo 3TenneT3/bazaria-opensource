@@ -1,0 +1,29 @@
+# Dependencias y compilados
+node_modules/
+dist/
+dist-ssr/
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# Secretos y datos locales: nunca se versionan
+.env
+.env.*
+!.env.example
+backend/data/
+backend/backups/
+*.pem
+*.key
+
+# Registros
+*.log
+logs/
+npm-debug.log*
+
+# Editores y sistema
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.sw?
