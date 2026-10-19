@@ -34,7 +34,7 @@ export function NavBar() {
               {({ isActive }) =>
                 central ? (
                   <>
-                    <span className="flex h-14 w-14 items-center justify-center rounded-full bg-lila-500 text-white shadow-lg shadow-lila-500/30">
+                    <span className="flex h-14 w-14 items-center justify-center rounded-full bg-lila-600 text-white shadow-lg shadow-lila-500/30">
                       <Icono size={26} strokeWidth={2.2} />
                     </span>
                   </>

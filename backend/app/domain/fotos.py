@@ -124,6 +124,10 @@ class AlmacenLocal(Almacen):
         if os.path.exists(ruta):
             os.remove(ruta)
 
+    def tamano(self, llave_variante: str) -> int:
+        """Bytes que ocupa el archivo; FileNotFoundError si no existe."""
+        return os.path.getsize(self._ruta(llave_variante))
+
     def url(self, llave_variante: str) -> str:
         e = expiracion_enlace()
         return f"{self.base_url}/{llave_variante}?e={e}&s={firmar_enlace(llave_variante, e)}"

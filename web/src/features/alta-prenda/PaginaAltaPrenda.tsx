@@ -221,7 +221,7 @@ export function PaginaAltaPrenda() {
                   key={e}
                   onClick={() => setEstado(e)}
                   className={`min-h-11 flex-1 rounded-full px-3 py-1.5 text-sm font-medium capitalize ${
-                    estado === e ? 'bg-lila-500 text-white' : 'bg-black/5 dark:bg-white/10'
+                    estado === e ? 'bg-lila-600 text-white' : 'bg-black/5 dark:bg-white/10'
                   }`}
                 >
                   {e}

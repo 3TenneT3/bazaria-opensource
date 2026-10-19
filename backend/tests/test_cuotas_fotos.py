@@ -64,3 +64,11 @@ async def test_espacio_lleno_da_413_y_premium_tiene_mas(client, usuaria_b, ajust
         await db.execute(update(Usuaria).where(Usuaria.id == usuaria_b["id"]).values(plan="premium"))
         await db.commit()
     assert (await _subir(client, usuaria_b, _foto_distinta())).status_code == 201
+
+
+async def test_auth_me_informa_espacio_usado_y_cuota(client, usuaria_a):
+    antes = (await client.get("/auth/me", headers=usuaria_a["headers"])).json()
+    assert antes["fotosBytesCuota"] == cuota_bytes(antes["plan"])
+    assert (await _subir(client, usuaria_a, _foto_distinta())).status_code == 201
+    despues = (await client.get("/auth/me", headers=usuaria_a["headers"])).json()
+    assert despues["fotosBytesUsados"] > antes["fotosBytesUsados"]

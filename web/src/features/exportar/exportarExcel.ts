@@ -1,45 +1,60 @@
 import * as XLSX from 'xlsx'
 import type { Prenda, Venta } from '@/domain/types'
-import { formatearFecha } from '@/lib/fechas'
+import { fechaExcel, hojaConFormato, pesos } from '@/lib/excel'
+import { gananciaDeVenta } from '@/domain/costos'
 
-/** Exporta Inventario y Ventas a un archivo Excel con dos hojas. */
-export function exportarExcel(prendas: Prenda[], ventas: Venta[]): void {
+const MONEDA_INVENTARIO = ['Lo que costó', 'En cuánto se da']
+const MONEDA_VENTAS = ['Precio final', 'Reembolso', 'Envío', 'Comisión', 'Ganancia']
+
+/** Arma el libro con Inventario y Ventas: dinero como número en pesos y fechas reales de Excel. */
+export function libroResumen(prendas: Prenda[], ventas: Venta[]): XLSX.WorkBook {
   const prendaPorId = new Map(prendas.map((p) => [p.id, p]))
 
-  const hojaInventario = XLSX.utils.json_to_sheet(
+  const hojaInventario = hojaConFormato(
     prendas.map((p) => ({
       Tipo: p.tipo ?? '',
       Color: p.color ?? '',
       'Talla o medida': p.talla ?? '',
       Marca: p.marca ?? '',
       Estado: p.estado,
-      'Lo que costó': (p.costo / 100).toFixed(2),
-      'En cuánto se da': (p.precioVenta / 100).toFixed(2),
+      'Lo que costó': pesos(p.costo),
+      'En cuánto se da': pesos(p.precioVenta),
       Status: p.status,
-      Agregada: formatearFecha(p.creadoEn),
+      Agregada: fechaExcel(p.creadoEn),
     })),
+    { moneda: MONEDA_INVENTARIO, fecha: ['Agregada'] },
   )
 
-  const hojaVentas = XLSX.utils.json_to_sheet(
+  const hojaVentas = hojaConFormato(
     ventas.map((v) => {
       const prenda = prendaPorId.get(v.prendaId)
-      const ganancia = v.precioFinal - (prenda?.costo ?? 0) - v.costoEnvio - v.comision
+      const ganancia = gananciaDeVenta(v, prenda?.costo ?? 0)
       return {
         'Prenda o artículo': prenda?.tipo ?? 'Desconocida',
-        'Precio final': (v.precioFinal / 100).toFixed(2),
-        Envío: (v.costoEnvio / 100).toFixed(2),
-        Comisión: (v.comision / 100).toFixed(2),
-        Ganancia: (ganancia / 100).toFixed(2),
+        'Precio final': pesos(v.precioFinal),
+        Reembolso: pesos(v.reembolso ?? 0),
+        Envío: pesos(v.costoEnvio),
+        Comisión: pesos(v.comision),
+        Ganancia: pesos(ganancia),
         Canal: v.canal,
-        Fecha: formatearFecha(v.fechaVenta),
+        Fecha: fechaExcel(v.fechaVenta),
+        Devolución: v.devueltaEn ? fechaExcel(v.devueltaEn) : '',
+        'Qué pasó con la prenda': v.destinoDevolucion
+          ? { disponible: 'volvió al inventario', descartada: 'llegó dañada', cliente: 'se la quedó la clienta' }[v.destinoDevolucion]
+          : '',
       }
     }),
+    { moneda: MONEDA_VENTAS, fecha: ['Fecha', 'Devolución'] },
   )
 
   const libro = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(libro, hojaInventario, 'Inventario')
   XLSX.utils.book_append_sheet(libro, hojaVentas, 'Ventas')
+  return libro
+}
 
+/** Exporta Inventario y Ventas a un archivo Excel con dos hojas. */
+export function exportarExcel(prendas: Prenda[], ventas: Venta[]): void {
   const fecha = new Date().toISOString().slice(0, 10)
-  XLSX.writeFile(libro, `bazaria-${fecha}.xlsx`)
+  XLSX.writeFile(libroResumen(prendas, ventas), `bazaria-${fecha}.xlsx`)
 }

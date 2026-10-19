@@ -11,7 +11,7 @@ from app.core.db import get_db
 from app.core.deps import usuaria_actual
 from app.core.errors import ApiError, fecha_cliente_o_none, id_en_uso, not_found, IdRuta
 from app.models.models import Prenda, Usuaria, Venta
-from app.schemas import VentaCrear, VentaOut
+from app.schemas import DevolucionCrear, VentaCrear, VentaOut
 from app.serializers import venta_to_out
 
 router = APIRouter(tags=["ventas"])
@@ -111,7 +111,9 @@ async def eliminar_venta(
 
     try:
         await db.delete(venta)
-        if prenda is not None:
+        # Si ya se había devuelto y la prenda volvió al inventario o a la papelera, la prenda ya no
+        # depende de esta venta (incluso pudo venderse otra vez): no se toca.
+        if prenda is not None and venta.destino_devolucion in (None, "cliente"):
             prenda.status = "disponible"
         await db.commit()
     except Exception:
@@ -119,3 +121,60 @@ async def eliminar_venta(
         raise
 
     return None
+
+
+@router.post("/ventas/{venta_id}/devolucion", response_model=VentaOut)
+async def registrar_devolucion(
+    venta_id: IdRuta,
+    data: DevolucionCrear,
+    db: AsyncSession = Depends(get_db),
+    usuaria: Usuaria = Depends(usuaria_actual),
+):
+    """Registra que la clienta devolvió la prenda o pidió un reembolso (total o parcial).
+
+    La venta se conserva: cuenta como ingreso solo lo que no se reembolsó; el envío y la comisión
+    siguen siendo gasto. La prenda vuelve al inventario, va a la papelera o se queda con la clienta.
+    """
+    venta = (
+        await db.execute(select(Venta).where(Venta.id == venta_id, Venta.usuaria_id == usuaria.id))
+    ).scalar_one_or_none()
+    if venta is None:
+        raise not_found("Venta no encontrada")
+
+    if venta.devuelta_en is not None:
+        # Reintento tras perder la respuesta (sin conexión): la misma devolución no es error.
+        if venta.reembolso == data.reembolso and venta.destino_devolucion == data.destino:
+            return venta_to_out(venta)
+        raise ApiError(409, "YA_DEVUELTA", "Esta venta ya tiene una devolución registrada.")
+
+    if data.reembolso > venta.precio_final:
+        raise ApiError(
+            422, "REEMBOLSO_MAYOR", "El reembolso no puede ser mayor que lo que se cobró en la venta."
+        )
+
+    prenda = (
+        await db.execute(select(Prenda).where(Prenda.id == venta.prenda_id, Prenda.usuaria_id == usuaria.id))
+    ).scalar_one_or_none()
+    if prenda is None or prenda.status != "vendida":
+        raise ApiError(409, "PRENDA_NO_VENDIDA", "La prenda de esta venta ya no está marcada como vendida.")
+
+    ahora = datetime.now(timezone.utc)
+    fecha = fecha_cliente_o_none(data.fecha_devolucion) or ahora
+    if fecha < venta.fecha_venta:
+        fecha = venta.fecha_venta
+    try:
+        venta.devuelta_en = fecha
+        venta.reembolso = data.reembolso
+        venta.destino_devolucion = data.destino
+        if data.destino == "disponible":
+            prenda.status = "disponible"
+            prenda.descartada_en = None
+        elif data.destino == "descartada":
+            prenda.status = "descartada"
+            prenda.descartada_en = ahora
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
+    await db.refresh(venta)
+    return venta_to_out(venta)

@@ -118,6 +118,16 @@ class ServidorFalso {
     const p = this.prendas.get(v.prendaId)
     if (p) this.prendas.set(p.id, { ...p, status: 'disponible' })
   }
+  async registrarDevolucion(id: string, data: { reembolso: number; destino: 'disponible' | 'descartada' | 'cliente' }, op?: { fecha?: string }) {
+    this.red('registrarDevolucion')
+    const v = this.ventas.get(id)
+    if (!v) throw new ErrorApi('Venta no encontrada', 404)
+    const devuelta = { ...v, devueltaEn: op?.fecha ?? new Date().toISOString(), reembolso: data.reembolso, destinoDevolucion: data.destino }
+    this.ventas.set(id, devuelta)
+    const p = this.prendas.get(v.prendaId)
+    if (p && data.destino !== 'cliente') this.prendas.set(p.id, { ...p, status: data.destino })
+    return devuelta
+  }
   async listarLotes() {
     this.red('listarLotes')
     return [...this.lotes.values()]
@@ -278,6 +288,24 @@ describe('modo sin conexión', () => {
     await ds.cerrarSesionEnTodos()
     expect(servidor.lotes.size).toBe(1) // lo pendiente subió antes de cerrar
     expect(servidor.llamadas).toContain('cerrarSesionEnTodos')
+  })
+
+  it('devolución sin conexión: cambia la prenda en el teléfono y se sube al volver la red', async () => {
+    const { servidor, ds, motor } = crear()
+    const prenda = await ds.crearPrenda(PRENDA(null), FOTO())
+    const venta = await ds.registrarVenta(prenda.id, VENTA)
+    expect(await motor.sincronizar()).toBe('vacia')
+    servidor.enLinea = false
+    const devuelta = await ds.registrarDevolucion(venta.id, { reembolso: VENTA.precioFinal, destino: 'disponible' })
+    expect(devuelta.destinoDevolucion).toBe('disponible')
+    expect((await ds.obtenerPrenda(prenda.id))?.status).toBe('disponible')
+    expect(await motor.sincronizar()).toBe('sin-red')
+    expect(servidor.ventas.get(venta.id)?.devueltaEn).toBeFalsy()
+
+    servidor.enLinea = true
+    expect(await motor.sincronizar()).toBe('vacia')
+    expect(servidor.ventas.get(venta.id)?.destinoDevolucion).toBe('disponible')
+    expect(servidor.prendas.get(prenda.id)?.status).toBe('disponible')
   })
 
   it('abre sin conexión con la última sesión conocida', async () => {

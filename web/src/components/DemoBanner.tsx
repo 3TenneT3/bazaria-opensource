@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { RotateCcw, Sun, Moon, Settings, Check } from 'lucide-react'
+import { RotateCcw, Sun, Moon, Settings, Check, Trash2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { reiniciarDemo } from '@/data/DemoDataSource'
 import { useToast } from './Toast'
 import { useTema, SKINS } from './TemaProvider'
@@ -8,14 +9,43 @@ import { esModoDemo, getDataSource } from '@/data'
 import { ETIQUETA_VERSION } from '@/lib/version'
 import { descartarAvisos, useEstadoSync } from '@/data/sincronizacion/estado'
 import { useVocabulario } from '@/components/Vocabulario'
+import { mb } from '@/lib/bytes'
+import type { Usuaria } from '@/data/DataSource'
 
 export function DemoBanner() {
   const { modo, setModo } = useVocabulario()
   const [reiniciando, setReiniciando] = useState(false)
   const [ajustes, setAjustes] = useState(false)
+  const navigate = useNavigate()
   const { mostrarToast } = useToast()
   const { tema, alternarTema, skin, setSkin } = useTema()
   const sync = useEstadoSync()
+  const [cuenta, setCuenta] = useState<Usuaria | null>(null)
+  const [confirmarLiberar, setConfirmarLiberar] = useState(false)
+  const [liberando, setLiberando] = useState(false)
+
+  async function liberarFotosDeVentas() {
+    setLiberando(true)
+    try {
+      const r = await getDataSource().liberarFotos()
+      mostrarToast(r.liberados > 0 ? `Liberaste ${mb(r.bytesLiberados)} (${r.liberados} fotos)` : 'No hay fotos de ventas que quitar.')
+      setCuenta(await getDataSource().usuariaActual())
+    } catch {
+      mostrarToast('No se pudo. Revisa tu conexión e intenta de nuevo.')
+    } finally {
+      setLiberando(false)
+      setConfirmarLiberar(false)
+    }
+  }
+
+  // Espacio de fotos: se pide al abrir Ajustes (sin conexión queda la última versión conocida).
+  useEffect(() => {
+    if (!ajustes || esModoDemo) return
+    getDataSource()
+      .usuariaActual()
+      .then(setCuenta)
+      .catch(() => undefined)
+  }, [ajustes])
 
   // Cambios que el servidor rechazó al subirlos (p. ej. prenda ya vendida en otro dispositivo).
   useEffect(() => {
@@ -100,6 +130,25 @@ export function DemoBanner() {
           <Settings size={14} />
         </button>
       </div>
+      <BottomSheet abierto={confirmarLiberar} onCerrar={() => setConfirmarLiberar(false)} titulo="¿Liberar espacio?">
+        <div className="flex flex-col gap-4">
+          <p className="text-sm">
+            A todas tus prendas vendidas se les quita la foto grande y se queda la miniatura, con todos sus datos (precio,
+            ganancia, fecha). No se recupera: si deshaces una venta o la duplicas, tendrá la foto chica.
+          </p>
+          <button
+            onClick={liberarFotosDeVentas}
+            disabled={liberando}
+            className="min-h-11 w-full rounded-2xl bg-lila-600 px-5 py-3 font-semibold text-white disabled:opacity-50"
+          >
+            {liberando ? 'Liberando…' : 'Sí, liberar espacio'}
+          </button>
+          <button onClick={() => setConfirmarLiberar(false)} className="min-h-11 w-full rounded-2xl bg-black/5 px-5 py-3 font-semibold dark:bg-white/10">
+            Mejor no
+          </button>
+        </div>
+      </BottomSheet>
+
       <BottomSheet abierto={ajustes} onCerrar={() => setAjustes(false)} titulo="Configuración">
         <p className="mb-3 text-sm font-semibold text-tinta dark:text-tinta-dark">Colores</p>
         <div className="grid grid-cols-5 gap-1">
@@ -138,7 +187,7 @@ export function DemoBanner() {
               <img src={s.vista} alt="" className="h-16 w-16 object-contain" />
               {s.nombre}
               {skin === s.id && (
-                <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-lila-500 text-white">
+                <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-lila-600 text-white">
                   <Check size={14} />
                 </span>
               )}
@@ -173,6 +222,28 @@ export function DemoBanner() {
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="mt-5 flex items-start gap-3">
+          <div className="min-w-0 flex-1">
+            {!esModoDemo && cuenta?.fotosBytesCuota ? (
+              <EspacioFotos
+                usados={cuenta.fotosBytesUsados ?? 0}
+                cuota={cuenta.fotosBytesCuota}
+                onLiberar={() => setConfirmarLiberar(true)}
+              />
+            ) : null}
+          </div>
+          {/* Junto al espacio: vaciar la papelera es lo que libera fotos. */}
+          <button
+            onClick={() => {
+              setAjustes(false)
+              navigate('/app/inventario?vista=papelera')
+            }}
+            className="flex min-h-11 shrink-0 items-center gap-2 rounded-full bg-black/5 px-4 text-sm font-semibold dark:bg-white/10"
+          >
+            <Trash2 size={18} /> Papelera
+          </button>
         </div>
 
         {!esModoDemo && (
@@ -250,6 +321,41 @@ export function DemoBanner() {
           </div>
         )}
       </BottomSheet>
+    </div>
+  )
+}
+
+/** Barra de espacio usado por las fotos frente al límite del plan. */
+export function EspacioFotos({ usados, cuota, onLiberar }: { usados: number; cuota: number; onLiberar?: () => void }) {
+  const pct = Math.min(100, Math.round((usados / cuota) * 100))
+  const color = pct >= 90 ? 'bg-red-500' : pct >= 75 ? 'bg-amber-500' : 'bg-lila-600'
+  return (
+    <div>
+      <div className="flex justify-between text-xs font-semibold text-tinta/70 dark:text-tinta-dark/70">
+        <span>Espacio de fotos</span>
+        <span>
+          {mb(usados)} de {mb(cuota)}
+        </span>
+      </div>
+      <div
+        className="mt-1 h-2 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10"
+        role="progressbar"
+        aria-label="Espacio de fotos usado"
+        aria-valuenow={pct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
+        <div className={`h-full ${color}`} style={{ width: `${pct}%` }} />
+      </div>
+      {pct >= 90 && <p className="mt-1 text-xs text-red-600">Ya casi llenas tu espacio de fotos. Si necesitas más, escríbenos.</p>}
+      {pct >= 75 && onLiberar && (
+        <button
+          onClick={onLiberar}
+          className="mt-2 min-h-11 w-full rounded-2xl bg-black/5 px-4 text-sm font-semibold dark:bg-white/10"
+        >
+          Liberar espacio de fotos de ventas
+        </button>
+      )}
     </div>
   )
 }

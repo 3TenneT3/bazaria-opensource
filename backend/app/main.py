@@ -225,6 +225,12 @@ setup_flare(
         # En volumen (docker-compose: ./data/flare:/data/flare) para que el
         # histórico sobreviva a cada `up --build`. Configurable por env en tests.
         sqlite_path=os.environ.get("FLARE_SQLITE_PATH", "/data/flare/flare.sqlite3"),
+        # Nunca guardar cuerpos: un error en /admin/login guardaría la contraseña, y en /prendas
+        # datos de la usuaria. Ruta, código, IP y traza bastan para diagnosticar.
+        max_request_body_bytes=0,
+        capture_response_body=False,
+        capture_request_headers=False,  # Authorization / cookies de sesión
+        retention_hours=168,  # 7 días, como dice el aviso de privacidad
     ),
 )
 

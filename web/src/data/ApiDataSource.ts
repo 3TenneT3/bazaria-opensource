@@ -5,7 +5,9 @@ import type {
   CrearLoteInput,
   CrearPrendaInput,
   RegistrarVentaInput,
+  RegistrarDevolucionInput,
   RangoFechas,
+  ResultadoLiberarFotos,
 } from './DataSource'
 import type { Lote, Prenda, Venta, AnalisisVision, ResumenMes, ResumenLote, StatusPrenda } from '@/domain/types'
 import { ErrorApi, ErrorRed, ErrorServidor } from './sincronizacion/tipos'
@@ -201,6 +203,17 @@ export class ApiDataSource implements DataSource {
     return this.request<Prenda>(`/prendas/${id}`, { method: 'PATCH', body: JSON.stringify(data) })
   }
 
+  async liberarFotos(ids?: string[]): Promise<ResultadoLiberarFotos> {
+    return this.request<ResultadoLiberarFotos>('/prendas/liberar-fotos', {
+      method: 'POST',
+      body: JSON.stringify(ids ? { ids } : {}),
+    })
+  }
+
+  async eliminarPrenda(id: string): Promise<void> {
+    await this.request(`/prendas/${id}`, { method: 'DELETE' })
+  }
+
   async cambiarStatus(id: string, status: StatusPrenda): Promise<Prenda> {
     return this.request<Prenda>(`/prendas/${id}/status`, {
       method: 'PATCH',
@@ -230,6 +243,13 @@ export class ApiDataSource implements DataSource {
 
   async deshacerVenta(ventaId: string): Promise<void> {
     await this.request(`/ventas/${ventaId}`, { method: 'DELETE' })
+  }
+
+  async registrarDevolucion(ventaId: string, data: RegistrarDevolucionInput, opciones?: { fecha?: string }): Promise<Venta> {
+    return this.request<Venta>(`/ventas/${ventaId}/devolucion`, {
+      method: 'POST',
+      body: JSON.stringify({ ...data, ...(opciones?.fecha ? { fechaDevolucion: opciones.fecha } : {}) }),
+    })
   }
 
   // --- IA ---

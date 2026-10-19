@@ -46,7 +46,7 @@ export function PaginaLotes() {
         <h1 className="font-display text-2xl font-bold">Lotes</h1>
         <button
           onClick={() => setFormAbierto(true)}
-          className="flex min-h-11 items-center gap-1 rounded-full bg-lila-500 px-4 text-sm font-semibold text-white"
+          className="flex min-h-11 items-center gap-1 rounded-full bg-lila-600 px-4 text-sm font-semibold text-white"
         >
           <Plus size={18} /> Nuevo lote
         </button>

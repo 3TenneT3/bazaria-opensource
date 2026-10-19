@@ -6,6 +6,7 @@ import type {
   ResumenMes,
   ResumenLote,
   StatusPrenda,
+  DestinoDevolucion,
 } from '@/domain/types'
 
 export interface Usuaria {
@@ -14,6 +15,9 @@ export interface Usuaria {
   plan?: 'gratis' | 'premium'
   /** El servidor dice si para esta cuenta hay reconocimiento de prendas por foto. */
   iaDisponible?: boolean
+  /** Solo en modo api: espacio de fotos usado y el límite del plan, en bytes. */
+  fotosBytesUsados?: number
+  fotosBytesCuota?: number
 }
 
 export interface FiltrosPrendas {
@@ -52,6 +56,17 @@ export interface RegistrarVentaInput {
   canal: Venta['canal']
 }
 
+/** Devolución de una venta: cuánto se le regresó a la clienta (centavos) y qué pasa con la prenda. */
+export interface RegistrarDevolucionInput {
+  reembolso: number
+  destino: DestinoDevolucion
+}
+
+export interface ResultadoLiberarFotos {
+  liberados: number
+  bytesLiberados: number
+}
+
 export interface RangoFechas {
   desde: string
   hasta: string
@@ -83,11 +98,20 @@ export interface DataSource {
   crearPrenda(data: CrearPrendaInput, foto: Blob): Promise<Prenda>
   actualizarPrenda(id: string, data: Partial<CrearPrendaInput>): Promise<Prenda>
   cambiarStatus(id: string, status: StatusPrenda): Promise<Prenda>
+  /** Borrado definitivo (libera la foto). Solo prendas que están en la papelera (descartadas). */
+  eliminarPrenda(id: string): Promise<void>
+  /**
+   * Quita la foto grande de prendas VENDIDAS y deja la miniatura, para liberar espacio. Sin `ids`: todas las
+   * vendidas. Solo con cuenta (es una acción del servidor) y siempre a pedido de la usuaria.
+   */
+  liberarFotos(ids?: string[]): Promise<ResultadoLiberarFotos>
 
   // Ventas
   registrarVenta(prendaId: string, data: RegistrarVentaInput): Promise<Venta>
   listarVentas(rango?: RangoFechas): Promise<Venta[]>
   deshacerVenta(ventaId: string): Promise<void>
+  /** Devolución total o parcial. La venta se conserva; la prenda vuelve, va a la papelera o se queda con la clienta. */
+  registrarDevolucion(ventaId: string, data: RegistrarDevolucionInput): Promise<Venta>
 
   // IA
   analizarFoto(foto: Blob): Promise<AnalisisVision | null>

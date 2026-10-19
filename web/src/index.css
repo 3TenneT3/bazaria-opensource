@@ -24,7 +24,7 @@
   --color-lila-100: #e6def4;
   --color-lila-300: #c3aee8;
   --color-lila-500: #9b7fd1;
-  --color-lila-600: #8468bd;
+  --color-lila-600: #7a5bb7;
   --color-lila-700: #6b52a0;
 
   --color-menta-100: #dcf3ea;
@@ -34,6 +34,7 @@
   --color-rosa-100: #fbe4ec;
   --color-rosa-300: #f3b8cf;
   --color-rosa-500: #e687ac;
+  --color-perdida: #b4235a; /* pérdidas y borrar: >=4.5:1 sobre blanco y crema; en oscuro se aclara abajo */
 
   --font-display: 'Quicksand', 'Nunito', system-ui, sans-serif;
   --font-sans: 'Quicksand', 'Nunito', system-ui, sans-serif;
@@ -50,6 +51,7 @@
     margin: 0;
     background-color: var(--color-crema);
     color: var(--color-tinta);
+    font-weight: 500; /* Quicksand 400 se ve muy delgada sobre los fondos con patrón */
     -webkit-font-smoothing: antialiased;
     min-height: 100svh;
     transition: background-color 0.2s ease, color 0.2s ease;
@@ -83,12 +85,12 @@
 /* Skins: reemplazan el acento (lila-*) y los fondos. Se eligen en la ruedita de configuración. */
 [data-skin='menta'] {
   --color-lila-50: #eaf7f1; --color-lila-100: #d3efe3; --color-lila-300: #8fd4b8;
-  --color-lila-500: #3a9c76; --color-lila-600: #2d8664; --color-lila-700: #226a4f;
+  --color-lila-500: #3a9c76; --color-lila-600: #297b5c; --color-lila-700: #226a4f;
   --color-crema: #f8fcf9; --color-crema-dark: #162019; --color-superficie-dark: #1f2e25;
 }
 [data-skin='rosa'] {
   --color-lila-50: #fdf0f5; --color-lila-100: #fbdce8; --color-lila-300: #f2a9c6;
-  --color-lila-500: #d9558f; --color-lila-600: #c04079; --color-lila-700: #9c3463;
+  --color-lila-500: #d9558f; --color-lila-600: #bd3e77; --color-lila-700: #9c3463;
   --color-crema: #fffafb; --color-crema-dark: #22171c; --color-superficie-dark: #31222a;
 }
 [data-skin='oceano'] {
@@ -98,7 +100,7 @@
 }
 [data-skin='atardecer'] {
   --color-lila-50: #fff3eb; --color-lila-100: #ffe0cc; --color-lila-300: #ffb88a;
-  --color-lila-500: #d9672a; --color-lila-600: #bd5420; --color-lila-700: #97421a;
+  --color-lila-500: #d9672a; --color-lila-600: #ad4c1d; --color-lila-700: #97421a;
   --color-crema: #fffaf5; --color-crema-dark: #211a15; --color-superficie-dark: #302620;
 }
 
@@ -139,7 +141,7 @@
 }
 
 /* Verde de ganancia en modo oscuro (todas las skins; fairy tiene el suyo más abajo). */
-html.dark { --color-menta-500: #7fd6b1; }
+html.dark { --color-menta-500: #7fd6b1; --color-perdida: #ff9cc0; }
 
 /* Texto secundario legible en todas las skins: los grises translúcidos (/40-/70, incluida la navegación
    inactiva) quedan en 80 % de tinta, >=4.5:1 sobre las superficies y fondos de todas las skins. */
@@ -151,9 +153,13 @@ html.dark [class*='text-tinta-dark/4'], html.dark [class*='text-tinta-dark/5'],
 html.dark [class*='text-tinta-dark/6'], html.dark [class*='text-tinta-dark/7'] {
   color: color-mix(in srgb, var(--color-tinta-dark) 80%, transparent);
 }
+/* Texto directo sobre los fondos con patrón (leopardo, encaje, camo): halo del color del fondo para que
+   las manchas no se crucen con las letras. Dentro de tarjetas blancas no se nota; los botones de color no lo llevan. */
+.bg-libreta { text-shadow: 0 0 2px var(--color-crema), 0 0 6px var(--color-crema), 0 0 12px var(--color-crema); }
+html.dark .bg-libreta { text-shadow: 0 0 2px var(--color-crema-dark), 0 0 6px var(--color-crema-dark), 0 0 12px var(--color-crema-dark); }
+.bg-libreta :is([class^='bg-'], [class*=' bg-']) { text-shadow: none; }
 input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--color-tinta) 65%, transparent); }
 html.dark input::placeholder, html.dark textarea::placeholder { color: color-mix(in srgb, var(--color-tinta-dark) 60%, transparent); }
-[data-skin='doodle'] body { font-weight: 500; }
 [data-skin='doodle'] .text-xs { font-size: 0.8125rem; line-height: 1.25rem; }
 [data-skin='doodle'] .text-\[10px\] { font-size: 0.75rem; }
 
@@ -232,7 +238,7 @@ html.dark[data-skin='y2k'] .tarjeta { border-color: rgb(156 200 240 / 0.18); }
   --color-tinta: #1a0a14; --color-tinta-dark: #ffe9f4;
 }
 [data-skin='gyaru'] .bg-libreta {
-  background: url('/gyaru/leopard-tile-rosa.svg') 0 0 / 160px var(--color-crema);
+  background: url('/gyaru/leopard-rosa.svg') 0 0 / 260px var(--color-crema);
 }
 html.dark[data-skin='gyaru'] .bg-libreta {
   background:
@@ -358,15 +364,15 @@ html.dark[data-skin='tokyo'] .tarjeta { border-color: rgb(232 184 58 / 0.4); }
   [data-skin='tokyo'] .bg-libreta::before {
     content: ''; position: fixed; inset: 0; pointer-events: none;
     background:
-      url('/tokyo/purikura.webp') no-repeat left calc(14rem + 2%) top 9% / 52px,
-      url('/tokyo/badge-tokyo.webp') no-repeat left calc(14rem + 0.6%) top 30% / 86px,
-      url('/tokyo/gashapon.webp') no-repeat left calc(14rem + 1.5%) top 50% / 66px,
-      url('/tokyo/onigiri.webp') no-repeat left calc(14rem + 1.8%) top 70% / 60px,
+      url('/tokyo/purikura.webp') no-repeat left calc(14rem + 2%) top 72px / 52px,
+      url('/tokyo/badge-tokyo.webp') no-repeat left calc(14rem + 0.6%) top max(215px, 36%) / 86px,
+      url('/tokyo/gashapon.webp') no-repeat left calc(14rem + 1.5%) top max(295px, 56%) / 66px,
+      url('/tokyo/onigiri.webp') no-repeat left calc(14rem + 1.8%) top max(385px, 77%) / 60px,
       url('/tokyo/bolsa.webp') no-repeat left calc(14rem + 1.5%) bottom 3% / 70px,
-      url('/tokyo/reloj.webp') no-repeat right 1.5% top 5% / 76px,
-      url('/tokyo/sudadera.webp') no-repeat right 1.2% top 26% / 84px,
-      url('/tokyo/cassette.webp') no-repeat right 1.2% top 48% / 84px,
-      url('/tokyo/gancho.webp') no-repeat right 1.2% top 66% / 84px,
+      url('/tokyo/reloj.webp') no-repeat right 1.5% top 72px / 76px,
+      url('/tokyo/sudadera.webp') no-repeat right 1.2% top max(210px, 36%) / 84px,
+      url('/tokyo/cassette.webp') no-repeat right 1.2% top max(325px, 54%) / 84px,
+      url('/tokyo/gancho.webp') no-repeat right 1.2% top max(410px, 73%) / 84px,
       url('/tokyo/tenis.webp') no-repeat right 1% bottom 3% / 104px;
   }
 }

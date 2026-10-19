@@ -26,8 +26,9 @@ def prenda_to_out(prenda: Prenda, foto: Foto | None) -> PrendaOut:
     foto_mini_url = None
     if foto is not None:
         almacen = AlmacenLocal()
-        foto_url = almacen.url(llave_variante(foto.sha256, "detalle"))
         foto_mini_url = almacen.url(llave_variante(foto.sha256, "mini"))
+        # Foto reducida: la grande ya no existe, el detalle muestra la miniatura.
+        foto_url = foto_mini_url if foto.reducida else almacen.url(llave_variante(foto.sha256, "detalle"))
 
     return PrendaOut(
         id=prenda.id,
@@ -44,6 +45,8 @@ def prenda_to_out(prenda: Prenda, foto: Foto | None) -> PrendaOut:
         precioVenta=prenda.precio_venta,
         status=prenda.status,
         creadoEn=prenda.creada_en,
+        descartadaEn=prenda.descartada_en,
+        fotoReducida=bool(foto and foto.reducida),
     )
 
 

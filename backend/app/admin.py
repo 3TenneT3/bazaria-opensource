@@ -293,6 +293,9 @@ class VentaAdmin(VistaBase, model=Venta):
         Venta.comision,
         Venta.canal,
         Venta.fecha_venta,
+        Venta.reembolso,
+        Venta.destino_devolucion,
+        Venta.devuelta_en,
     ]
     column_sortable_list = [Venta.fecha_venta]
     can_create = False

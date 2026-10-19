@@ -15,6 +15,7 @@ import { FotoPrenda } from '@/components/FotoPrenda'
 import { useVocabulario } from '@/components/Vocabulario'
 import { descargarFoto } from '@/lib/descargarFoto'
 import { DuplicarPrenda } from './DuplicarPrenda'
+import { VentaYDevolucion } from './VentaYDevolucion'
 
 const CANALES: { valor: CanalVenta; etiqueta: string }[] = [
   { valor: 'instagram', etiqueta: 'Instagram' },
@@ -107,7 +108,7 @@ export function PaginaDetallePrenda() {
           <Check size={40} strokeWidth={3} />
         </div>
         <p className="text-sm text-tinta/60 dark:text-tinta-dark/60">Lo que ganaste</p>
-        <p className="font-display text-4xl font-bold text-menta-500">
+        <p className={`font-display text-4xl font-bold ${gananciaConfirmada < 0 ? 'text-perdida' : 'text-menta-500'}`}>
           {formatearMXN(gananciaConfirmada)}
         </p>
         <button onClick={deshacerVenta} className="font-semibold text-lila-600 underline dark:text-lila-300">
@@ -126,6 +127,11 @@ export function PaginaDetallePrenda() {
         <ArrowLeft size={18} /> Atrás
       </button>
 
+      {prenda.fotoReducida && (
+        <p className="text-xs text-tinta/70 dark:text-tinta-dark/70">
+          Esta prenda solo conserva la foto chica (se liberó espacio al venderla).
+        </p>
+      )}
       <div className="relative">
         <FotoPrenda
           prenda={prenda}
@@ -197,6 +203,8 @@ export function PaginaDetallePrenda() {
         }}
       />
 
+      <VentaYDevolucion prenda={prenda} onCambio={setPrenda} />
+
       {prenda.status !== 'vendida' && prenda.status !== 'descartada' && (
         <div className="flex flex-col gap-2">
           <Boton
@@ -233,7 +241,7 @@ export function PaginaDetallePrenda() {
                   key={c.valor}
                   onClick={() => setCanal(c.valor)}
                   className={`min-h-11 rounded-full px-3 py-1.5 text-sm font-medium ${
-                    canal === c.valor ? 'bg-lila-500 text-white' : 'bg-black/5 dark:bg-white/10'
+                    canal === c.valor ? 'bg-lila-600 text-white' : 'bg-black/5 dark:bg-white/10'
                   }`}
                 >
                   {c.etiqueta}

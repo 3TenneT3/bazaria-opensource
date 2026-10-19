@@ -1,5 +1,5 @@
 import type { StatusPrenda } from '@/domain/types'
-import type { CrearLoteInput, CrearPrendaInput, RegistrarVentaInput } from '../DataSource'
+import type { CrearLoteInput, CrearPrendaInput, RegistrarDevolucionInput, RegistrarVentaInput } from '../DataSource'
 
 /**
  * Un cambio hecho en este dispositivo que todavía no llega al servidor.
@@ -13,8 +13,10 @@ export type Operacion =
   | { tipo: 'crearPrenda'; id: string; data: CrearPrendaInput; creadoEn: string }
   | { tipo: 'actualizarPrenda'; id: string; data: Partial<CrearPrendaInput> }
   | { tipo: 'cambiarStatus'; id: string; status: StatusPrenda }
+  | { tipo: 'eliminarPrenda'; id: string }
   | { tipo: 'registrarVenta'; id: string; prendaId: string; data: RegistrarVentaInput; fechaVenta: string }
   | { tipo: 'deshacerVenta'; id: string }
+  | { tipo: 'registrarDevolucion'; id: string; prendaId: string; data: RegistrarDevolucionInput; fecha: string }
 
 export interface OperacionPendiente {
   /** Clave ordenable (orden de captura). */

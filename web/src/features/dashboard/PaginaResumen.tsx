@@ -84,7 +84,7 @@ export function PaginaResumen() {
         </Tarjeta>
         <Tarjeta className="p-4">
           <p className="text-xs text-tinta/60 dark:text-tinta-dark/60">Ganaste de verdad</p>
-          <p className="font-display text-xl font-bold text-menta-500">
+          <p className={`font-display text-xl font-bold ${resumen.gananciaNeta < 0 ? 'text-perdida' : 'text-menta-500'}`}>
             {formatearMXN(resumen.gananciaNeta)}
           </p>
         </Tarjeta>
@@ -121,7 +121,7 @@ export function PaginaResumen() {
             </div>
             <div className="flex justify-between border-t border-black/10 pt-2 text-base dark:border-white/10">
               <dt className="font-bold">Ganaste de verdad</dt>
-              <dd className={`font-display font-bold ${resumen.gananciaNeta < 0 ? 'text-rosa-500' : 'text-menta-500'}`}>
+              <dd className={`font-display font-bold ${resumen.gananciaNeta < 0 ? 'text-perdida' : 'text-menta-500'}`}>
                 {formatearMXN(resumen.gananciaNeta)}
               </dd>
             </div>

@@ -137,6 +137,30 @@ Response `200`: `Prenda` actualizada.
 **Regla de negocio:** si el nuevo status es `descartada` y la prenda pertenece a un lote,
 el backend recalcula el prorrateo del lote excluyendo esa prenda del reparto.
 
+**Papelera:** `descartada` es la papelera. La `Prenda` trae `descartadaEn` (ISO 8601, o `null`):
+se anota al descartar y se limpia al restaurar. A los 30 días de `descartadaEn` la prenda se borra
+sola (el servidor lo hace al listar el inventario de esa usuaria, sin cron).
+
+### `DELETE /prendas/:id`
+Borrado definitivo. Response `204`. Solo prendas que están en la papelera:
+`409 NO_EN_PAPELERA` si el status no es `descartada` (así una vendida nunca se borra, porque sus
+ventas se borrarían en cascada). `404` si no existe o es de otra usuaria.
+
+Libera la foto (fila y archivos) salvo que otra prenda de la misma usuaria la use, o que otra
+usuaria tenga la misma imagen (los archivos se nombran por hash). Recalcula el prorrateo del lote.
+
+### `POST /prendas/liberar-fotos`
+Request: `{ "ids": ["<uuid>", ...] }` (máx. 500; sin `ids`: todas las vendidas).
+Response `200`: `{ "liberados": n, "bytesLiberados": m }`.
+
+Quita la foto grande (`detalle`) de prendas **vendidas** y deja la miniatura; los datos de la venta no
+se tocan. La acción es siempre a pedido de la usuaria (no hay purga automática). Una foto no se reduce
+si todavía la usa una prenda que no está vendida (p. ej. un duplicado disponible). `bytes` de la foto
+pasa a contar solo la miniatura, así que baja el uso de la cuota. Idempotente.
+
+La `Prenda` trae `fotoReducida: true` y su `fotoUrl` apunta a la miniatura. Si se vuelve a subir
+exactamente la misma imagen, `POST /prendas` recupera la foto grande.
+
 ## Ventas
 
 ### `POST /prendas/:id/venta`
@@ -155,8 +179,27 @@ operaciones debe persistir.
 Query params opcionales (ISO 8601). Response `200`: `Venta[]`.
 
 ### `DELETE /ventas/:id`
-"Deshacer venta": borra la venta y regresa la prenda asociada a status `disponible`.
-Response `204`.
+"Deshacer venta" (fue un error de captura): borra la venta y regresa la prenda a `disponible`.
+Si la venta ya tenía una devolución con la prenda de vuelta en inventario o papelera, la prenda
+no se toca (pudo venderse otra vez). Response `204`.
+
+### `POST /ventas/:id/devolucion`
+Devolución real (total o parcial). La venta **se conserva** en el historial.
+Request:
+```json
+{ "reembolso": 15000, "destino": "disponible", "fechaDevolucion": "2026-10-19T18:00:00Z" }
+```
+- `reembolso`: centavos que se le regresaron a la clienta, de `0` a `precioFinal`.
+- `destino`: `disponible` (vuelve al inventario), `descartada` (llegó dañada → papelera) o
+  `cliente` (se la quedó; reembolso parcial). `fechaDevolucion` es opcional (captura sin conexión).
+
+Response `200`: `Venta` con `devueltaEn`, `reembolso` y `destinoDevolucion`. Errores:
+`409 YA_DEVUELTA` (ya tiene otra devolución; repetir la misma no es error),
+`409 PRENDA_NO_VENDIDA`, `422 REEMBOLSO_MAYOR`, `404`.
+
+**Cómo cuenta en reportes:** ingreso = `precioFinal - reembolso`; envío y comisión siempre
+son gasto; el costo de la prenda no cuenta si volvió a `disponible` (contará al revenderla).
+Una prenda que regresó no cuenta en `numeroPrendasVendidas`.
 
 ## IA de visión
 

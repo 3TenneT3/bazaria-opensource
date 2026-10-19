@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx'
+import { hojaConFormato } from '@/lib/excel'
 import type { EstadoPrenda, Prenda } from '@/domain/types'
 import type { CrearPrendaInput } from '@/data/DataSource'
 
@@ -18,8 +19,8 @@ function guardar(
   instrucciones = false,
 ) {
   const libro = XLSX.utils.book_new()
-  const hoja = XLSX.utils.json_to_sheet(filas, { header: encabezados })
-  hoja['!cols'] = encabezados.map(() => ({ wch: 16 }))
+  // Costo y Precio como número con formato de pesos: se pueden sumar y se vuelven a importar igual.
+  const hoja = hojaConFormato(filas, { encabezados, moneda: ['Costo', 'Precio de venta'] })
   XLSX.utils.book_append_sheet(libro, hoja, 'Inventario')
   if (instrucciones) {
     XLSX.utils.book_append_sheet(

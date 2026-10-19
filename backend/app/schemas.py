@@ -83,6 +83,25 @@ class PrendaOut(CamelModel):
     precio_venta: int
     status: Status
     creado_en: datetime
+    descartada_en: Optional[datetime] = None
+    # Solo conserva la miniatura: `fotoUrl` ya apunta a ella.
+    foto_reducida: bool = False
+
+
+class LiberarFotosIn(CamelModel):
+    """Prendas vendidas a las que se les quita la foto grande. Sin `ids`: todas las vendidas."""
+
+    ids: Optional[list[str]] = Field(default=None, max_length=500)
+
+    @field_validator("ids")
+    @classmethod
+    def _ids_uuid(cls, v: Optional[list[str]]) -> Optional[list[str]]:
+        return None if v is None else [_uuid_o_none(i) for i in v]
+
+
+class LiberarFotosOut(CamelModel):
+    liberados: int
+    bytes_liberados: int
 
 
 class PrendaCrearData(CamelModel):
@@ -138,6 +157,17 @@ class VentaCrear(CamelModel):
     _id_uuid = field_validator("id")(_uuid_o_none)
 
 
+DestinoDevolucion = Literal["disponible", "descartada", "cliente"]
+
+
+class DevolucionCrear(CamelModel):
+    # Lo que se le regresó a la clienta, en centavos (0 .. precio final de la venta).
+    reembolso: int = Field(ge=0)
+    destino: DestinoDevolucion
+    # Hora real (si se registró sin conexión). Si no viene, la del servidor.
+    fecha_devolucion: Optional[datetime] = None
+
+
 class VentaOut(CamelModel):
     id: str
     prenda_id: str
@@ -146,6 +176,9 @@ class VentaOut(CamelModel):
     comision: int
     canal: Canal
     fecha_venta: datetime
+    devuelta_en: Optional[datetime] = None
+    reembolso: int = 0
+    destino_devolucion: Optional[DestinoDevolucion] = None
 
 
 # ---------- Auth ----------
@@ -156,6 +189,9 @@ class MeOut(CamelModel):
     plan: str = "gratis"
     # True si la app debe ofrecer reconocer la foto (premium y con IA conectada).
     ia_disponible: bool = False
+    # Espacio de fotos (para que la usuaria vea cuánto lleva antes de llegar al límite).
+    fotos_bytes_usados: int = 0
+    fotos_bytes_cuota: int = 0
 
 
 # ---------- IA ----------

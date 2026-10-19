@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getDataSource } from '@/data'
 import type { Prenda, Venta } from '@/domain/types'
-import { capitalParado, gananciaVenta } from '@/domain/costos'
+import { capitalParado, gananciaDeVenta } from '@/domain/costos'
 import { formatearMXN } from '@/lib/dinero'
 import { formatearFecha, nombreMes } from '@/lib/fechas'
 import { Tarjeta } from '@/components/Tarjeta'
@@ -70,7 +70,7 @@ export function PaginaInicio() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
         <Tarjeta className="p-4">
           <p className="text-xs text-tinta/60 dark:text-tinta-dark/60">Lo que ganaste este mes</p>
-          <p className="mt-1 font-display text-xl font-bold text-lila-600 dark:text-lila-300">
+          <p className={`mt-1 font-display text-xl font-bold ${gananciaMes < 0 ? 'text-perdida' : 'text-lila-600 dark:text-lila-300'}`}>
             {formatearMXN(gananciaMes)}
           </p>
         </Tarjeta>
@@ -111,10 +111,17 @@ export function PaginaInicio() {
                 </div>
                 {prenda ? (
                   <div className="text-right">
-                    <p className="font-display text-sm font-bold text-menta-500">
-                      +{formatearMXN(gananciaVenta(venta.precioFinal, prenda.costo, venta.costoEnvio, venta.comision))}
+                    {(() => {
+                      const g = gananciaDeVenta(venta, prenda.costo)
+                      return (
+                        <p className={`font-display text-sm font-bold ${g < 0 ? 'text-perdida' : 'text-menta-500'}`}>
+                          {g < 0 ? '' : '+'}{formatearMXN(g)}
+                        </p>
+                      )
+                    })()}
+                    <p className="text-xs text-tinta/70 dark:text-tinta-dark/70">
+                      {venta.devueltaEn ? `devolución · reembolso ${formatearMXN(venta.reembolso ?? 0)}` : `vendida en ${formatearMXN(venta.precioFinal)}`}
                     </p>
-                    <p className="text-xs text-tinta/70 dark:text-tinta-dark/70">vendida en {formatearMXN(venta.precioFinal)}</p>
                   </div>
                 ) : (
                   <p className="text-sm text-tinta/70 dark:text-tinta-dark/70">vendida en {formatearMXN(venta.precioFinal)}</p>
@@ -127,7 +134,7 @@ export function PaginaInicio() {
 
       <Link
         to="/app/nueva"
-        className="rounded-2xl bg-lila-500 p-4 text-center font-display font-bold text-white"
+        className="rounded-2xl bg-lila-600 p-4 text-center font-display font-bold text-white"
       >
         + {t.agregarItem}
       </Link>

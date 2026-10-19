@@ -70,7 +70,8 @@ the exact reference: replicate it bit for bit.
 |---|---|
 | `POST /prendas/:id/venta` | `{ "precioFinal", "costoEnvio", "comision", "canal" }` → `201 Venta`; `409 YA_VENDIDA` if the garment is already sold (undo the sale first). Creating the sale and marking the garment `vendida` happen in **one database transaction**, with a conditional `UPDATE` so concurrent requests cannot both succeed |
 | `GET /ventas?desde=&hasta=` | Optional ISO dates → `Venta[]` |
-| `DELETE /ventas/:id` | Undo: deletes the sale, garment returns to `disponible` → `204` |
+| `DELETE /ventas/:id` | Undo (data-entry mistake): deletes the sale, garment returns to `disponible` → `204` |
+| `POST /ventas/:id/devolucion` | Return / refund `{ reembolso, destino: disponible\|descartada\|cliente }`. Sale is kept; income = price − refund; shipping and fees still count → `200`. `409 YA_DEVUELTA`, `422 REEMBOLSO_MAYOR` |
 
 ## Vision AI
 

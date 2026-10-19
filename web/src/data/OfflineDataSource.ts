@@ -5,7 +5,9 @@ import type {
   CrearLoteInput,
   CrearPrendaInput,
   RegistrarVentaInput,
+  RegistrarDevolucionInput,
   RangoFechas,
+  ResultadoLiberarFotos,
 } from './DataSource'
 import type { Lote, Prenda, Venta, AnalisisVision, ResumenMes, ResumenLote, StatusPrenda } from '@/domain/types'
 import type { ApiDataSource } from './ApiDataSource'
@@ -275,6 +277,21 @@ export class OfflineDataSource implements DataSource {
     return prenda
   }
 
+  async liberarFotos(ids?: string[]): Promise<ResultadoLiberarFotos> {
+    const r = await this.api.liberarFotos(ids) // exige conexión: es una acción del servidor
+    await this.motor.sincronizar() // baja las prendas ya con la foto reducida
+    return r
+  }
+
+  async eliminarPrenda(id: string): Promise<void> {
+    await this.listo()
+    await this.motor.serializar(async () => {
+      await this.local.eliminarPrenda(id)
+      await this.motor.encolar({ tipo: 'eliminarPrenda', id })
+    })
+    this.motor.disparar()
+  }
+
   // --- Ventas ---
 
   async registrarVenta(prendaId: string, data: RegistrarVentaInput): Promise<Venta> {
@@ -305,6 +322,18 @@ export class OfflineDataSource implements DataSource {
       await this.motor.encolar({ tipo: 'deshacerVenta', id: ventaId })
     })
     this.motor.disparar()
+  }
+
+  async registrarDevolucion(ventaId: string, data: RegistrarDevolucionInput): Promise<Venta> {
+    await this.listo()
+    const fecha = ahoraMonotono()
+    const venta = await this.motor.serializar(async () => {
+      const v = await this.local.registrarDevolucion(ventaId, data, { fecha })
+      await this.motor.encolar({ tipo: 'registrarDevolucion', id: ventaId, prendaId: v.prendaId, data, fecha })
+      return v
+    })
+    this.motor.disparar()
+    return venta
   }
 
   // --- IA (necesita servidor) ---

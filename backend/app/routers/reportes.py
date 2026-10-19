@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_db
 from app.core.deps import usuaria_actual
 from app.core.errors import not_found, IdRuta
-from app.domain.costos import recuperacion_lote
+from app.domain.costos import recuperacion_lote, cuenta_costo_de_prenda, ingreso_venta
 from app.models.models import Foto, Lote, Prenda, Usuaria, Venta
 from app.schemas import ResumenLoteOut, ResumenMesOut, TopTipoOut
 from app.serializers import cargar_fotos, lote_to_out, prenda_to_out
@@ -36,8 +36,9 @@ async def resumen_mes(
     )
     ventas = ventas_result.scalars().all()
 
-    total_ventas = sum(v.precio_final for v in ventas)
-    numero_prendas_vendidas = len(ventas)
+    # Devoluciones: cuenta solo lo que no se reembolsó; si la prenda regresó, no cuenta como vendida.
+    total_ventas = sum(ingreso_venta(v.precio_final, v.reembolso) for v in ventas)
+    numero_prendas_vendidas = sum(1 for v in ventas if v.destino_devolucion in (None, "cliente"))
 
     ganancia_por_tipo: dict[str, int] = {}
     ganancia_neta = 0
@@ -53,8 +54,8 @@ async def resumen_mes(
 
     for venta in ventas:
         prenda = prendas_por_id.get(venta.prenda_id)
-        costo = prenda.costo if prenda else 0
-        ganancia = venta.precio_final - costo - venta.costo_envio - venta.comision
+        costo = prenda.costo if prenda and cuenta_costo_de_prenda(venta.destino_devolucion) else 0
+        ganancia = ingreso_venta(venta.precio_final, venta.reembolso) - costo - venta.costo_envio - venta.comision
         ganancia_neta += ganancia
         tipo = (prenda.tipo if prenda else None) or "sin_tipo"
         ganancia_por_tipo[tipo] = ganancia_por_tipo.get(tipo, 0) + ganancia
@@ -110,7 +111,7 @@ async def resumen_lote(
         ventas_result = await db.execute(
             select(Venta).where(Venta.prenda_id.in_(prenda_ids), Venta.usuaria_id == usuaria.id)
         )
-        precios_finales = [v.precio_final for v in ventas_result.scalars().all()]
+        precios_finales = [ingreso_venta(v.precio_final, v.reembolso) for v in ventas_result.scalars().all()]
 
     calc = recuperacion_lote(lote.costo_total, precios_finales)
 

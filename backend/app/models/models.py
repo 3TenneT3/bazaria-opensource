@@ -90,6 +90,8 @@ class Foto(Base):
     creada_en: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+    # True = solo queda la miniatura (se quitó la foto grande de una prenda vendida); `bytes` cuenta solo ella.
+    reducida: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
 
     __table_args__ = (UniqueConstraint("usuaria_id", "sha256", name="fotos_usuaria_sha256_key"),)
 
@@ -119,6 +121,8 @@ class Prenda(Base):
     creada_en: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+    # Cuándo entró a la papelera (status "descartada"); a los 30 días se borra sola.
+    descartada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
         CheckConstraint("estado in ('nueva','seminueva','usada')", name="prendas_estado_check"),
@@ -146,9 +150,19 @@ class Venta(Base):
     comision: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
     canal: Mapped[str] = mapped_column(Text, nullable=False)
     fecha_venta: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    # Devolución: cuánto se le regresó a la clienta (total o parcial) y qué pasó con la prenda
+    # ('disponible' = volvió al inventario, 'descartada' = llegó dañada, 'cliente' = se la quedó).
+    devuelta_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    reembolso: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0, server_default="0")
+    destino_devolucion: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     __table_args__ = (
         CheckConstraint("precio_final >= 0", name="ventas_precio_final_check"),
+        CheckConstraint("reembolso >= 0 and reembolso <= precio_final", name="ventas_reembolso_check"),
+        CheckConstraint(
+            "destino_devolucion is null or destino_devolucion in ('disponible','descartada','cliente')",
+            name="ventas_destino_devolucion_check",
+        ),
         CheckConstraint(
             "canal in ('instagram','whatsapp','bazar','otro')", name="ventas_canal_check"
         ),

@@ -64,6 +64,17 @@ def ganancia_venta(precio_final: int, costo: int, costo_envio: int, comision: in
     return precio_final - costo - costo_envio - comision
 
 
+def ingreso_venta(precio_final: int, reembolso: int = 0) -> int:
+    """Lo que de verdad entró por la venta: precio final menos lo reembolsado en una devolución."""
+    return precio_final - reembolso
+
+
+def cuenta_costo_de_prenda(destino_devolucion: str | None) -> bool:
+    """El costo de la prenda se carga a la venta salvo que haya vuelto al inventario
+    (se cargará cuando se venda otra vez). Si llegó dañada o se la quedó la clienta, sí cuenta."""
+    return destino_devolucion != "disponible"
+
+
 def capital_parado(prendas: Sequence[tuple[str, int]]) -> int:
     """prendas: secuencia de (status, costo). Suma costo de disponible/apartada."""
     return sum(costo for status, costo in prendas if status in ("disponible", "apartada"))

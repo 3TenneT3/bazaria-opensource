@@ -1,4 +1,4 @@
-import type { Prenda } from './types'
+import type { Prenda, Venta } from './types'
 
 /**
  * Calcula el prorrateo de costo para las prendas de un lote.
@@ -66,6 +66,26 @@ export function gananciaVenta(
   comision: number,
 ): number {
   return precioFinal - costo - costoEnvio - comision
+}
+
+/** Lo que de verdad entró por una venta: precio final menos lo reembolsado en una devolución. */
+export function ingresoVenta(venta: Pick<Venta, 'precioFinal' | 'reembolso'>): number {
+  return venta.precioFinal - (venta.reembolso ?? 0)
+}
+
+/** El costo de la prenda cuenta en la venta salvo que haya vuelto al inventario (contará al revenderla). */
+export function costoDePrendaEnVenta(venta: Pick<Venta, 'destinoDevolucion'>, costoPrenda: number): number {
+  return venta.destinoDevolucion === 'disponible' ? 0 : costoPrenda
+}
+
+/** Ganancia real de una venta, ya con su devolución (si la hubo). Envío y comisión siempre cuentan. */
+export function gananciaDeVenta(venta: Venta, costoPrenda: number): number {
+  return gananciaVenta(ingresoVenta(venta), costoDePrendaEnVenta(venta, costoPrenda), venta.costoEnvio, venta.comision)
+}
+
+/** ¿La venta sigue contando como prenda vendida? (no si la prenda regresó). */
+export function cuentaComoVendida(venta: Pick<Venta, 'destinoDevolucion'>): boolean {
+  return !venta.destinoDevolucion || venta.destinoDevolucion === 'cliente'
 }
 
 /** Capital parado = suma del costo de las prendas con status disponible o apartada. */

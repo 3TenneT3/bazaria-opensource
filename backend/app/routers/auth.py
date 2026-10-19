@@ -11,6 +11,7 @@ from starlette.requests import Request
 
 from app.core.config import get_settings
 from app.core.db import get_db
+from app.domain.cuotas import cuota_bytes, uso_fotos
 from app.core.deps import usuaria_actual
 from app.core.errors import ApiError
 from app.core.google_oauth import build_authorize_url, exchange_code_for_tokens, verificar_id_token
@@ -110,9 +111,18 @@ async def auth_google_callback(
 
 
 @router.get("/me", response_model=MeOut)
-async def auth_me(usuaria: Usuaria = Depends(usuaria_actual)):
+async def auth_me(
+    db: AsyncSession = Depends(get_db),
+    usuaria: Usuaria = Depends(usuaria_actual),
+):
     s = get_settings()
-    return MeOut(email=usuaria.email, plan=usuaria.plan, ia_disponible=s.ia_activa and usuaria.plan == "premium")
+    return MeOut(
+        email=usuaria.email,
+        plan=usuaria.plan,
+        ia_disponible=s.ia_activa and usuaria.plan == "premium",
+        fotos_bytes_usados=await uso_fotos(db, usuaria.id),
+        fotos_bytes_cuota=cuota_bytes(usuaria.plan),
+    )
 
 
 @router.post("/cerrar-sesiones", status_code=204)

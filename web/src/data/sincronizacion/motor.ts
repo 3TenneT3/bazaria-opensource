@@ -1,5 +1,5 @@
 import type { Lote, Prenda, StatusPrenda, Venta } from '@/domain/types'
-import type { CrearLoteInput, CrearPrendaInput, RegistrarVentaInput } from '../DataSource'
+import type { CrearLoteInput, CrearPrendaInput, RegistrarDevolucionInput, RegistrarVentaInput } from '../DataSource'
 import type { Almacen } from '../db'
 import { actualizarEstado, leerEstado } from './estado'
 import { ErrorApi, ErrorRed, ErrorServidor, type Operacion, type OperacionPendiente } from './tipos'
@@ -12,8 +12,10 @@ export interface Remoto {
   crearPrenda(data: CrearPrendaInput, foto: Blob, opciones?: { id?: string; fecha?: string }): Promise<Prenda>
   actualizarPrenda(id: string, data: Partial<CrearPrendaInput>): Promise<Prenda>
   cambiarStatus(id: string, status: StatusPrenda): Promise<Prenda>
+  eliminarPrenda(id: string): Promise<void>
   registrarVenta(prendaId: string, data: RegistrarVentaInput, opciones?: { id?: string; fecha?: string }): Promise<Venta>
   deshacerVenta(ventaId: string): Promise<void>
+  registrarDevolucion(ventaId: string, data: RegistrarDevolucionInput, opciones?: { fecha?: string }): Promise<Venta>
   listarLotes(): Promise<Lote[]>
   listarPrendas(): Promise<Prenda[]>
   listarVentas(): Promise<Venta[]>
@@ -190,7 +192,10 @@ export class MotorSync {
         }
         if (e instanceof ErrorApi) {
           // El servidor entendió y dijo que no (validación, ya vendida, no existe…): reintentar no ayuda.
-          const esBorrado = siguiente.op.tipo === 'eliminarLote' || siguiente.op.tipo === 'deshacerVenta'
+          const esBorrado =
+            siguiente.op.tipo === 'eliminarLote' ||
+            siguiente.op.tipo === 'eliminarPrenda' ||
+            siguiente.op.tipo === 'deshacerVenta'
           await this.almacen.del('outbox', siguiente.id)
           if (!(esBorrado && e.status === 404)) {
             actualizarEstado({ avisos: [...leerEstado().avisos, mensajeDeRechazo(siguiente.op, e)] })
@@ -239,11 +244,17 @@ export class MotorSync {
       case 'cambiarStatus':
         await this.remoto.cambiarStatus(op.id, op.status)
         return
+      case 'eliminarPrenda':
+        await this.remoto.eliminarPrenda(op.id)
+        return
       case 'registrarVenta':
         await this.remoto.registrarVenta(op.prendaId, op.data, { id: op.id, fecha: op.fechaVenta })
         return
       case 'deshacerVenta':
         await this.remoto.deshacerVenta(op.id)
+        return
+      case 'registrarDevolucion':
+        await this.remoto.registrarDevolucion(op.id, op.data, { fecha: op.fecha })
         return
     }
   }
@@ -275,7 +286,7 @@ export class MotorSync {
       if (pendientes.some((o) => !o.atorada)) return
 
       // Lo que tiene un cambio atorado se conserva como está en el teléfono.
-      const protegidos = new Set(pendientes.flatMap((o) => (o.op.tipo === 'registrarVenta' ? [o.op.id, o.op.prendaId] : [o.op.id])))
+      const protegidos = new Set(pendientes.flatMap((o) => (o.op.tipo === 'registrarVenta' || o.op.tipo === 'registrarDevolucion' ? [o.op.id, o.op.prendaId] : [o.op.id])))
       const cambio = await this.reemplazar(lotes, prendas, ventas, protegidos)
       await this.almacen.putMeta('ultimaSync', new Date().toISOString())
       if (cambio) actualizarEstado({ version: leerEstado().version + 1 })
@@ -325,8 +336,8 @@ function esCuota(e: ErrorApi): boolean {
 
 function dependeDeRetenida(op: Operacion, retenidas: Set<string>): boolean {
   if (retenidas.size === 0) return false
-  if (op.tipo === 'actualizarPrenda' || op.tipo === 'cambiarStatus') return retenidas.has(op.id)
-  if (op.tipo === 'registrarVenta') return retenidas.has(op.prendaId)
+  if (op.tipo === 'actualizarPrenda' || op.tipo === 'cambiarStatus' || op.tipo === 'eliminarPrenda') return retenidas.has(op.id)
+  if (op.tipo === 'registrarVenta' || op.tipo === 'registrarDevolucion') return retenidas.has(op.prendaId)
   return false
 }
 
@@ -338,8 +349,10 @@ function mensajeDeRechazo(op: Operacion, e: ErrorApi): string {
     crearPrenda: 'guardar una prenda',
     actualizarPrenda: 'actualizar una prenda',
     cambiarStatus: 'cambiar el estado de una prenda',
+    eliminarPrenda: 'borrar una prenda de la papelera',
     registrarVenta: 'registrar una venta',
     deshacerVenta: 'deshacer una venta',
+    registrarDevolucion: 'registrar una devolución',
   }
   return `No se pudo ${que[op.tipo]}: ${e.message}`
 }

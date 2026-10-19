@@ -5,10 +5,12 @@ import type {
   CrearLoteInput,
   CrearPrendaInput,
   RegistrarVentaInput,
+  RegistrarDevolucionInput,
   RangoFechas,
 } from './DataSource'
 import type { Lote, Prenda, Venta, AnalisisVision, ResumenMes, ResumenLote, StatusPrenda } from '@/domain/types'
-import { prorratearLote, recuperacionLote } from '@/domain/costos'
+import { ingresoVenta, prorratearLote, recuperacionLote } from '@/domain/costos'
+import { venceYa } from '@/domain/papelera'
 import { resumenMes as calcularResumenMes } from '@/domain/resumen'
 import * as demoDb from './db'
 import { almacenDemo, type Almacen } from './db'
@@ -158,6 +160,13 @@ export class DemoDataSource implements DataSource {
     await this.init()
     let prendas = await this.db.getAll('prendas')
 
+    // La papelera se vacía sola: lo que lleva más de 30 días ahí se borra al abrir el inventario.
+    const vencidas = prendas.filter((p) => venceYa(p))
+    if (vencidas.length) {
+      for (const p of vencidas) await this.eliminarPrenda(p.id)
+      prendas = await this.db.getAll('prendas')
+    }
+
     if (filtros?.status) {
       prendas = prendas.filter((p) => p.status === filtros.status)
     }
@@ -244,13 +253,29 @@ export class DemoDataSource implements DataSource {
     await this.init()
     const existente = await this.db.get('prendas', id)
     if (!existente) throw new Error('Prenda no encontrada')
-    await this.db.put('prendas', { ...existente, status })
+    const descartadaEn =
+      status !== 'descartada' ? null : existente.status === 'descartada' ? (existente.descartadaEn ?? null) : new Date().toISOString()
+    await this.db.put('prendas', { ...existente, status, descartadaEn })
 
     // Entrar o salir de "descartada" cambia quién se reparte el costo del lote (también al restaurar).
     if (existente.loteId && existente.status !== status && [existente.status, status].includes('descartada')) {
       await this.recalcularLote(existente.loteId)
     }
     return (await this.db.get('prendas', id))!
+  }
+
+  async liberarFotos(): Promise<never> {
+    throw new Error('Quitar la foto grande solo existe con tu cuenta.')
+  }
+
+  async eliminarPrenda(id: string): Promise<void> {
+    await this.init()
+    const existente = await this.db.get('prendas', id)
+    if (!existente) return // ya no está: borrar dos veces no es un error
+    if (existente.status !== 'descartada') throw new Error('Solo se pueden borrar prendas de la papelera')
+    await this.db.del('prendas', id)
+    await this.db.del('fotos', id)
+    if (existente.loteId) await this.recalcularLote(existente.loteId)
   }
 
   /** Reparte el costo del lote entre sus prendas vigentes, en orden de creación (excepto costo manual). */
@@ -300,11 +325,33 @@ export class DemoDataSource implements DataSource {
     )
   }
 
+  async registrarDevolucion(ventaId: string, data: RegistrarDevolucionInput, opciones?: { fecha?: string }): Promise<Venta> {
+    await this.init()
+    const venta = await this.db.get('ventas', ventaId)
+    if (!venta) throw new Error('Venta no encontrada')
+    if (venta.devueltaEn) {
+      if (venta.reembolso === data.reembolso && venta.destinoDevolucion === data.destino) return venta
+      throw new Error('Esta venta ya tiene una devolución registrada.')
+    }
+    if (data.reembolso < 0 || data.reembolso > venta.precioFinal) {
+      throw new Error('El reembolso no puede ser mayor que lo que se cobró en la venta.')
+    }
+    const prenda = await this.db.get('prendas', venta.prendaId)
+    if (!prenda || prenda.status !== 'vendida') throw new Error('La prenda de esta venta ya no está marcada como vendida.')
+    const ahora = new Date().toISOString()
+    const devuelta: Venta = { ...venta, devueltaEn: opciones?.fecha ?? ahora, reembolso: data.reembolso, destinoDevolucion: data.destino }
+    await this.db.put('ventas', devuelta)
+    if (data.destino === 'disponible') await this.db.put('prendas', { ...prenda, status: 'disponible', descartadaEn: null })
+    if (data.destino === 'descartada') await this.db.put('prendas', { ...prenda, status: 'descartada', descartadaEn: ahora })
+    return devuelta
+  }
+
   async deshacerVenta(ventaId: string): Promise<void> {
     await this.init()
     const venta = await this.db.get('ventas', ventaId)
     if (!venta) return
-    const prenda = await this.db.get('prendas', venta.prendaId)
+    // Igual que el servidor: si ya se devolvió y la prenda regresó, la prenda no depende de esta venta.
+    const prenda = venta.destinoDevolucion && venta.destinoDevolucion !== 'cliente' ? undefined : await this.db.get('prendas', venta.prendaId)
     if (prenda) {
       await this.db.put('prendas', { ...prenda, status: 'disponible' })
     }
@@ -340,7 +387,7 @@ export class DemoDataSource implements DataSource {
 
     const { recuperado, faltante } = recuperacionLote(
       lote.costoTotal,
-      ventasDelLote.map((v) => v.precioFinal),
+      ventasDelLote.map((v) => ingresoVenta(v)),
     )
 
     const piezasValidas = lote.piezasCompradas - lote.piezasDescartadas

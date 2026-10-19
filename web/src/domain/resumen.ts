@@ -1,4 +1,5 @@
 import type { Prenda, Venta, ResumenMes } from './types'
+import { costoDePrendaEnVenta, cuentaComoVendida, gananciaDeVenta, ingresoVenta } from './costos'
 
 const DIA_MS = 1000 * 60 * 60 * 24
 
@@ -30,11 +31,12 @@ export function resumenMes(
   for (const venta of ventasDelMes) {
     const prenda = prendaPorId.get(venta.prendaId)
     if (!prenda) continue
-    totalVentas += venta.precioFinal
-    costoMercancia += prenda.costo
+    // Devoluciones: solo cuenta lo que no se reembolsó; si la prenda volvió al inventario, su costo no.
+    totalVentas += ingresoVenta(venta)
+    costoMercancia += costoDePrendaEnVenta(venta, prenda.costo)
     envios += venta.costoEnvio
     comisiones += venta.comision
-    const ganancia = venta.precioFinal - prenda.costo - venta.costoEnvio - venta.comision
+    const ganancia = gananciaDeVenta(venta, prenda.costo)
     gananciaNeta += ganancia
     const tipo = prenda.tipo ?? 'Sin tipo'
     gananciaPorTipo.set(tipo, (gananciaPorTipo.get(tipo) ?? 0) + ganancia)
@@ -59,7 +61,7 @@ export function resumenMes(
     costoMercancia,
     envios,
     comisiones,
-    numeroPrendasVendidas: ventasDelMes.length,
+    numeroPrendasVendidas: ventasDelMes.filter(cuentaComoVendida).length,
     topTipos,
     prendasEstancadas,
   }
